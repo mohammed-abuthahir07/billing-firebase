@@ -1,0 +1,59 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.main-content {
+  margin-top: var(--navbar-height);
+  margin-left: var(--sidebar-width);
+  padding: 28px;
+  width: calc(100% - var(--sidebar-width));
+  min-height: calc(100vh - var(--navbar-height));
+  background:
+    radial-gradient(1200px 400px at 0% 0%, rgba(37, 99, 235, 0.06), transparent 50%),
+    var(--bg-primary);
+  transition: margin-left var(--transition-normal), width var(--transition-normal), padding var(--transition-normal);
+  overflow-x: clip;
+  animation: pageEnter 0.45s var(--ease-out) both;
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  top: var(--navbar-height);
+  left: 0;
+  width: 100vw;
+  height: calc(100vh - var(--navbar-height));
+  background: rgba(15, 23, 42, 0.5);
+  z-index: 998;
+  animation: fadeIn var(--transition-fast) forwards;
+}
+
+@media (min-width: 769px) {
+  .sidebar-backdrop {
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    background: rgba(15, 23, 42, 0.45);
+  }
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    padding: 22px 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+    padding: 18px 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 14px 12px;
+  }
+}

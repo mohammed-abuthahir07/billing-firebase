@@ -1,0 +1,123 @@
+.sidebar {
+  position: fixed;
+  top: var(--navbar-height);
+  left: 0;
+  width: var(--sidebar-width);
+  height: calc(100vh - var(--navbar-height));
+  background: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
+  color: var(--text-light);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18px 0;
+  box-shadow: 2px 0 16px rgba(0, 0, 0, 0.18);
+  transition: transform 0.35s var(--ease-out);
+  z-index: 999;
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.sidebar-menu {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 12px;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #94a3b8;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+  display: block;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  font-size: 14.5px;
+  font-weight: 500;
+  transition: var(--transition-fast);
+  position: relative;
+}
+
+.sidebar-icon {
+  transition: color var(--transition-fast), transform var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f8fafc;
+  transform: translateX(2px);
+}
+
+.nav-link:hover .sidebar-icon {
+  color: #60a5fa;
+  transform: scale(1.08);
+}
+
+.nav-link.active {
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.22) 0%, rgba(37, 99, 235, 0.06) 100%);
+  color: #f8fafc;
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 0 var(--primary);
+}
+
+.nav-link.active .sidebar-icon {
+  color: #60a5fa;
+}
+
+.logout-btn {
+  margin: 16px 16px 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: var(--transition-fast);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+}
+
+.logout-btn:hover {
+  background: var(--danger);
+  color: white;
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.28);
+  transform: translateY(-1px);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-105%);
+    width: min(270px, 82vw);
+    box-shadow: none;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.4);
+  }
+
+  .sidebar-item {
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+
+  .logout-btn {
+    padding: 14px;
+  }
+}

@@ -1,0 +1,49 @@
+[debug] [2026-10-28T07:32:12.086Z] ----------------------------------------------------------------------
+[debug] [2026-10-28T07:32:12.090Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\zayit\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js functions:list --project billing-firebase-1b0e4 --debug
+[debug] [2026-10-28T07:32:12.091Z] CLI Version:   15.34.0
+[debug] [2026-10-28T07:32:12.091Z] Platform:      win32
+[debug] [2026-10-28T07:32:12.091Z] Node Version:  v24.19.0
+[debug] [2026-10-28T07:32:12.092Z] Detected Agent: unknown
+[debug] [2026-10-28T07:32:12.092Z] Time:          Wed Oct 28 2026 13:02:12 GMT+0530 (India Standard Time)
+[debug] [2026-10-28T07:32:12.092Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-10-28T07:32:12.237Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-10-28T07:32:12.238Z] > authorizing via signed-in user (softwarebilling067@gmail.com)
+[debug] [2026-10-28T07:32:12.238Z] [iam] checking project billing-firebase-1b0e4 for permissions ["cloudfunctions.functions.list","firebase.projects.get","run.services.list"]
+[debug] [2026-10-28T07:32:12.247Z] Checked if tokens are valid: true, expires at: 1793176287899
+[debug] [2026-10-28T07:32:12.247Z] Checked if tokens are valid: true, expires at: 1793176287899
+[debug] [2026-10-28T07:32:12.248Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/billing-firebase-1b0e4:testIamPermissions [none]
+[debug] [2026-10-28T07:32:12.248Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/billing-firebase-1b0e4:testIamPermissions  x-goog-user-project=billing-firebase-1b0e4
+[debug] [2026-10-28T07:32:12.248Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/billing-firebase-1b0e4:testIamPermissions {"permissions":["cloudfunctions.functions.list","firebase.projects.get","run.services.list"]}
+[debug] [2026-10-28T07:32:14.055Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/billing-firebase-1b0e4:testIamPermissions 200
+[debug] [2026-10-28T07:32:14.055Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/billing-firebase-1b0e4:testIamPermissions {"permissions":["cloudfunctions.functions.list","firebase.projects.get","run.services.list"]}
+[debug] [2026-10-28T07:32:14.056Z] Checked if tokens are valid: true, expires at: 1793176287899
+[debug] [2026-10-28T07:32:14.056Z] Checked if tokens are valid: true, expires at: 1793176287899
+[debug] [2026-10-28T07:32:14.057Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/billing-firebase-1b0e4/locations/-/functions [none]
+[debug] [2026-10-28T07:32:14.664Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/billing-firebase-1b0e4/locations/-/functions 403
+[debug] [2026-10-28T07:32:14.664Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/billing-firebase-1b0e4/locations/-/functions {"error":{"code":403,"message":"Cloud Functions API has not been used in project billing-firebase-1b0e4 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudfunctions.googleapis.com/overview?project=billing-firebase-1b0e4 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"activationUrl":"https://console.developers.google.com/apis/api/cloudfunctions.googleapis.com/overview?project=billing-firebase-1b0e4","consumer":"projects/billing-firebase-1b0e4","service":"cloudfunctions.googleapis.com","serviceTitle":"Cloud Functions API","containerInfo":"billing-firebase-1b0e4"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Cloud Functions API has not been used in project billing-firebase-1b0e4 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudfunctions.googleapis.com/overview?project=billing-firebase-1b0e4 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/cloudfunctions.googleapis.com/overview?project=billing-firebase-1b0e4"}]}]}}
+[debug] [2026-10-28T07:32:14.665Z] [functions] failed to list functions for billing-firebase-1b0e4
+[debug] [2026-10-28T07:32:14.665Z] [functions] Request to https://cloudfunctions.googleapis.com/v1/projects/billing-firebase-1b0e4/locations/-/functions had HTTP Error: 403, Cloud Functions API has not been used in project billing-firebase-1b0e4 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudfunctions.googleapis.com/overview?project=billing-firebase-1b0e4 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.
+[debug] [2026-10-28T07:32:14.970Z] FirebaseError: Request to https://cloudfunctions.googleapis.com/v1/projects/billing-firebase-1b0e4/locations/-/functions had HTTP Error: 403, Cloud Functions API has not been used in project billing-firebase-1b0e4 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudfunctions.googleapis.com/overview?project=billing-firebase-1b0e4 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.
+    at responseToError (C:\Users\zayit\AppData\Roaming\npm\node_modules\firebase-tools\lib\responseToError.js:53:12)
+    at RetryOperation._fn (C:\Users\zayit\AppData\Roaming\npm\node_modules\firebase-tools\lib\apiv2.js:415:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[error] 
+[error] Error: Failed to list functions for billing-firebase-1b0e4
+[debug] [2026-10-28T07:41:10.389Z] ----------------------------------------------------------------------
+[debug] [2026-10-28T07:41:10.392Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\zayit\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js functions:list --project billing-firebase-1b0e4 --debug
+[debug] [2026-10-28T07:41:10.392Z] CLI Version:   15.34.0
+[debug] [2026-10-28T07:41:10.392Z] Platform:      win32
+[debug] [2026-10-28T07:41:10.392Z] Node Version:  v24.19.0
+[debug] [2026-10-28T07:41:10.393Z] Detected Agent: unknown
+[debug] [2026-10-28T07:41:10.393Z] Time:          Wed Oct 28 2026 13:11:10 GMT+0530 (India Standard Time)
+[debug] [2026-10-28T07:41:10.393Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-10-28T07:41:10.534Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-10-28T07:41:10.534Z] > authorizing via signed-in user (softwarebilling067@gmail.com)
+[debug] [2026-10-28T07:41:10.535Z] [iam] checking project billing-firebase-1b0e4 for permissions ["cloudfunctions.functions.list","firebase.projects.get","run.services.list"]
+[debug] [2026-10-28T07:41:10.544Z] Checked if tokens are valid: true, expires at: 1793176287899
+[debug] [2026-10-28T07:41:10.544Z] Checked if tokens are valid: true, expires at: 1793176287899
+[debug] [2026-10-28T07:41:10.545Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/billing-firebase-1b0e4:testIamPermissions [none]
+[debug] [2026-10-28T07:41:10.545Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/billing-firebase-1b0e4:testIamPermissions  x-goog-user-project=billing-firebase-1b0e4
+[debug] [2026-10-28T07:41:10.545Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/billing-firebase-1b0e4:testIamPermissions {"permissions":["cloudfunctions.functions.list","firebase.projects.get","run.services.list"]}

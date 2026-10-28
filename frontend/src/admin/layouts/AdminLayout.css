@@ -1,0 +1,55 @@
+/* Global Admin Layout Base */
+.admin-layout {
+    display: flex;
+    min-height: 100vh;
+    background: #f8fafc;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+/* On desktop the sidebar is fixed 260px wide — push main content right */
+.admin-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    margin-left: 260px;        /* offset for fixed sidebar */
+    padding-top: 70px;         /* offset for fixed navbar */
+    box-sizing: border-box;
+}
+
+.admin-content {
+    flex: 1;
+    padding: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    animation: fadeInPage 0.4s ease-out;
+}
+
+/* Page entrance animations */
+@keyframes fadeInPage {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================
+   RESPONSIVE — TABLET & MOBILE
+   ========================================== */
+@media (max-width: 768px) {
+    /* On mobile sidebar is off-screen (slides in as overlay), so no margin */
+    .admin-main {
+        margin-left: 0;
+        padding-top: 65px;   /* matches mobile navbar height */
+    }
+
+    .admin-content {
+        padding: 0;
+    }
+}
