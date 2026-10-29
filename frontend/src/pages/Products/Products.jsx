@@ -303,7 +303,7 @@ const Products = () => {
 
       <section className="filters-bar animate-slide-up delay-1">
         <div className="search-box">
-          <Search size={18} className="search-icon" />
+          {/* <Search size={18} className="search-icon" /> */}
           <input
             type="text"
             placeholder="Search by name or SKU..."
