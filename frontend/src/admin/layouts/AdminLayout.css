@@ -5,6 +5,7 @@
     background: #f8fafc;
     width: 100%;
     overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* On desktop the sidebar is fixed 260px wide — push main content right */
@@ -37,6 +38,109 @@
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* ==========================================
+   ADMIN DARK THEME (SCOPED STRICTLY TO ADMIN)
+   ========================================== */
+.admin-layout.admin-dark-theme {
+    background: #0b1120;
+    color: #f1f5f9;
+}
+
+.admin-layout.admin-dark-theme .admin-content {
+    background: #0b1120;
+}
+
+.admin-layout.admin-dark-theme .dashboard,
+.admin-layout.admin-dark-theme .companies,
+.admin-layout.admin-dark-theme .company-details,
+.admin-layout.admin-dark-theme .analytics,
+.admin-layout.admin-dark-theme .admin-invoices-page,
+.admin-layout.admin-dark-theme .admin-products-page,
+.admin-layout.admin-dark-theme .admin-settings-page {
+    background: #0b1120 !important;
+    color: #f1f5f9;
+}
+
+.admin-layout.admin-dark-theme .card,
+.admin-layout.admin-dark-theme .stat-card,
+.admin-layout.admin-dark-theme .company-card,
+.admin-layout.admin-dark-theme .invoice-section,
+.admin-layout.admin-dark-theme .admin-card,
+.admin-layout.admin-dark-theme .table-card,
+.admin-layout.admin-dark-theme .modal-dialog {
+    background: #111827 !important;
+    border-color: #1f2937 !important;
+    color: #f1f5f9;
+}
+
+.admin-layout.admin-dark-theme h1,
+.admin-layout.admin-dark-theme h2,
+.admin-layout.admin-dark-theme h3,
+.admin-layout.admin-dark-theme h4,
+.admin-layout.admin-dark-theme .dashboard-title,
+.admin-layout.admin-dark-theme .page-title,
+.admin-layout.admin-dark-theme .card-value {
+    color: #f8fafc !important;
+}
+
+.admin-layout.admin-dark-theme p,
+.admin-layout.admin-dark-theme .dashboard-subtitle,
+.admin-layout.admin-dark-theme .companies-subtitle,
+.admin-layout.admin-dark-theme .page-subtitle,
+.admin-layout.admin-dark-theme .card-title {
+    color: #94a3b8 !important;
+}
+
+.admin-layout.admin-dark-theme .companies-table-container,
+.admin-layout.admin-dark-theme .invoices-table-container,
+.admin-layout.admin-dark-theme .products-table-container {
+    background: #111827 !important;
+    border-color: #1f2937 !important;
+}
+
+.admin-layout.admin-dark-theme table {
+    background: #111827 !important;
+    color: #f1f5f9 !important;
+}
+
+.admin-layout.admin-dark-theme th {
+    background: #1f2937 !important;
+    color: #e2e8f0 !important;
+    border-color: #374151 !important;
+}
+
+.admin-layout.admin-dark-theme td {
+    background: #111827 !important;
+    color: #cbd5e1 !important;
+    border-color: #1f2937 !important;
+}
+
+.admin-layout.admin-dark-theme tr:hover td {
+    background: #1e293b !important;
+}
+
+.admin-layout.admin-dark-theme .search-box,
+.admin-layout.admin-dark-theme .filter-select,
+.admin-layout.admin-dark-theme .date-input,
+.admin-layout.admin-dark-theme .form-control {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+.admin-layout.admin-dark-theme .search-box input {
+    color: #f8fafc !important;
+}
+
+.admin-layout.admin-dark-theme .dashboard-refresh,
+.admin-layout.admin-dark-theme .ghost-btn,
+.admin-layout.admin-dark-theme .btn-secondary,
+.admin-layout.admin-dark-theme .page-btn {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
 }
 
 /* ==========================================

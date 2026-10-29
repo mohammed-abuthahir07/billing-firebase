@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, LayoutDashboard, LogOut, Menu, Shield, X } from "lucide-react";
+import { ChevronDown, LayoutDashboard, LogOut, Menu, Settings, Shield, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import "./AdminNavbar.css";
 import { useAdminUI } from "../context/AdminUIContext";
@@ -94,6 +94,17 @@ const AdminNavbar = () => {
                         >
                             <LayoutDashboard size={16} />
                             Dashboard
+                        </button>
+                        <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                                setMenuOpen(false);
+                                navigate("/admin/settings");
+                            }}
+                        >
+                            <Settings size={16} />
+                            Settings
                         </button>
                         <button
                             type="button"

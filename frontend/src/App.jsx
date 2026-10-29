@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import Layout from "./components/Layout/Layout";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
@@ -20,6 +20,9 @@ const AdminDashboard = lazy(() => import("./admin/pages/AdminDashboard/AdminDash
 const Companies = lazy(() => import("./admin/pages/Companies/Companies"));
 const CompanyDetails = lazy(() => import("./admin/pages/CompanyDetails/CompanyDetails"));
 const Analytics = lazy(() => import("./admin/pages/Analytics/Analytics"));
+const AdminInvoices = lazy(() => import("./admin/pages/Invoices/AdminInvoices"));
+const AdminProducts = lazy(() => import("./admin/pages/Products/AdminProducts"));
+const AdminSettings = lazy(() => import("./admin/pages/Settings/AdminSettings"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword/ForgotPassword"));
 const VerifyOTP = lazy(() => import("./pages/ForgotPassword/VerifyOTP"));
 const ResetPassword = lazy(() => import("./pages/ForgotPassword/ResetPassword"));
@@ -62,10 +65,14 @@ function App() {
                 </AdminProtectedRoute>
               }
             >
+              <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="companies" element={<Companies />} />
               <Route path="companies/:id" element={<CompanyDetails />} />
+              <Route path="invoices" element={<AdminInvoices />} />
+              <Route path="products" element={<AdminProducts />} />
+              <Route path="settings" element={<AdminSettings />} />
             </Route>
 
             {/* Public pages */}

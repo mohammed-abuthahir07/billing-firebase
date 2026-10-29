@@ -43,20 +43,34 @@
     display: flex;
     flex-direction: column;
     padding: 16px 12px;
-    gap: 6px;
+    gap: 4px;
     flex-grow: 1;
     overflow-y: auto;
+}
+
+/* Section Category Headers */
+.sidebar-section-header {
+    font-size: 10px;
+    font-weight: 800;
+    color: #64748b;
+    letter-spacing: 0.1em;
+    padding: 14px 14px 4px;
+    text-transform: uppercase;
+}
+
+.sidebar-section-header:first-of-type {
+    padding-top: 4px;
 }
 
 /* Sidebar Links */
 .sidebar-link {
     color: #9ca3af;
     text-decoration: none;
-    padding: 12px 16px;
+    padding: 10px 14px;
     display: flex;
     align-items: center;
     gap: 12px;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
     border-radius: 10px;
     transition: all 0.25s ease;
@@ -66,15 +80,16 @@
 .sidebar-link:hover {
     background: rgba(255, 255, 255, 0.08);
     color: #ffffff;
-    transform: translateX(4px);
+    transform: translateX(3px);
 }
 
 .sidebar-link svg {
     transition: transform 0.25s ease, color 0.25s ease;
+    flex-shrink: 0;
 }
 
 .sidebar-link:hover svg {
-    transform: scale(1.15);
+    transform: scale(1.1);
     color: #3b82f6;
 }
 
@@ -92,19 +107,19 @@
 
 /* Logout Section at Bottom */
 .logout-container {
-    padding: 20px 16px;
+    padding: 16px 14px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .logout-btn {
     width: 100%;
     margin: 0 auto;
-    padding: 12px;
+    padding: 11px;
     border: 1px solid rgba(239, 68, 68, 0.25);
     border-radius: 10px;
     background: rgba(239, 68, 68, 0.08);
     color: #f87171;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     display: flex;
@@ -146,11 +161,11 @@
     }
 
     .sidebar-link {
-        padding: 14px 16px; /* Slightly larger touch target on mobile */
-        font-size: 15px;
+        padding: 12px 14px; /* Slightly larger touch target on mobile */
+        font-size: 14.5px;
     }
 
     .logout-btn {
-        padding: 14px; /* Touch-friendly height */
+        padding: 12px;
     }
 }
