@@ -292,7 +292,7 @@ const Reports = () => {
 
           <section className="filters-bar animate-slide-up delay-2">
             <div className="search-box">
-  
+              <Search size={18} className="search-icon" />
               <input
                 type="text"
                 placeholder="Search by invoice number or customer…"
