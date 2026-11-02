@@ -1,10 +1,12 @@
 import { useAuth } from "../../context/AuthContext";
-import { Menu, X, LogOut, ChevronDown } from "lucide-react";
+import { Menu, X, LogOut, ChevronDown, User, Settings } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Navbar.css";
 
 const Navbar = () => {
   const { user, logout, openLoginModal, isMobileMenuOpen, setIsMobileMenuOpen } = useAuth();
+  const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -59,6 +61,29 @@ const Navbar = () => {
                   <p className="dropdown-username">{user.name}</p>
                   <p className="dropdown-email">{user.email}</p>
                 </div>
+                <div className="dropdown-divider" />
+                <button
+                  className="dropdown-item"
+                  role="menuitem"
+                  onClick={() => {
+                    navigate("/profile");
+                    setShowDropdown(false);
+                  }}
+                >
+                  <User size={16} />
+                  <span>Business Profile</span>
+                </button>
+                <button
+                  className="dropdown-item"
+                  role="menuitem"
+                  onClick={() => {
+                    navigate("/settings");
+                    setShowDropdown(false);
+                  }}
+                >
+                  <Settings size={16} />
+                  <span>Settings</span>
+                </button>
                 <div className="dropdown-divider" />
                 <button
                   className="dropdown-item logout"

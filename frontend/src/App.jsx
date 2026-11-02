@@ -13,6 +13,7 @@ const Bill = lazy(() => import("./pages/Bills/Bill"));
 const Login = lazy(() => import("./pages/Login/Login"));
 const Register = lazy(() => import("./pages/Register/Register"));
 const Profile = lazy(() => import("./pages/Profile/Profile"));
+const Settings = lazy(() => import("./pages/Settings/Settings"));
 const Reports = lazy(() => import("./pages/Reports/Reports"));
 const UserAnalytics = lazy(() => import("./pages/Analytics/Analytics"));
 const AdminLogin = lazy(() => import("./admin/pages/AdminLogin/AdminLogin"));
@@ -53,6 +54,7 @@ function App() {
                 <Route path="/analytics" element={<UserAnalytics />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/settings" element={<Settings />} />
               </Route>
             </Route>
 

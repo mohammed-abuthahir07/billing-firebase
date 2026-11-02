@@ -1,7 +1,16 @@
 import "./Sidebar.css";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { LayoutDashboard, Package, Receipt, BarChart3, TrendingUp, LogOut, User } from "lucide-react";
+import {
+  LayoutDashboard,
+  Package,
+  Receipt,
+  BarChart3,
+  TrendingUp,
+  LogOut,
+  User,
+  Settings,
+} from "lucide-react";
 
 const Sidebar = () => {
   const { user, logout, isMobileMenuOpen, setIsMobileMenuOpen } = useAuth();
@@ -76,6 +85,17 @@ const Sidebar = () => {
           <li className="sidebar-item">
             <User size={20} className="sidebar-icon" />
             <span>Profile</span>
+          </li>
+        </NavLink>
+
+        <NavLink
+          to="/settings"
+          className="nav-link"
+          onClick={handleLinkClick}
+        >
+          <li className="sidebar-item">
+            <Settings size={20} className="sidebar-icon" />
+            <span>Settings</span>
           </li>
         </NavLink>
       </ul>
