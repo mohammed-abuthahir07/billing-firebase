@@ -347,7 +347,7 @@ const Analytics = () => {
                     <th>Customer</th>
                     <th>Invoices</th>
                     <th>Total Purchase</th>
-                    <th>Share</th>
+              
                   </tr>
                 </thead>
                 <tbody>
@@ -355,14 +355,12 @@ const Analytics = () => {
                     rankedCustomers.map((customer) => (
                       <tr key={`${customer.rank}-${customer.customerName}`}>
                         <td>
-                          <span className="ua-rank">#{customer.rank}</span>
+                          <span className="ua-rank">{customer.rank}</span>
                         </td>
                         <td className="ua-customer">{customer.customerName}</td>
                         <td>{formatCount(customer.invoices)}</td>
                         <td className="ua-money">{formatCurrency(customer.revenue)}</td>
-                        <td>
-                          <span className="ua-share">{customer.share}%</span>
-                        </td>
+                        
                       </tr>
                     ))
                   ) : (
