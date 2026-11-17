@@ -59,7 +59,7 @@ const AdminLogin = () => {
                     <X size={20} />
                 </button>
                 <div className="admin-login-header">
-                    <span className="auth-brand-mark">BS</span>
+                  
                     <div className="admin-icon">
                         <Shield size={45} />
                     </div>

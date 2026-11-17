@@ -90,7 +90,7 @@ const Login = () => {
         ) : (
           <>
             <div className="login-header">
-              <span className="auth-brand-mark">BS</span>
+
               <h2>Billing SaaS</h2>
               <p>Welcome back! Please enter your details.</p>
             </div>

@@ -104,7 +104,6 @@ const Register = () => {
         ) : (
           <>
             <div className="login-header">
-              <span className="auth-brand-mark">BS</span>
               <h2>Billing SaaS</h2>
               <p>Create your free billing account today.</p>
             </div>
