@@ -57,6 +57,7 @@ export const getDashboard = async () => {
         weight_unit: prod.weightUnit || 'g',
         selling_price: String(Number(prod.sellingPrice || 0).toFixed(2)),
         quantity: qty,
+        outOfStockNotified: prod.outOfStockNotified === true,
       });
     }
   });
@@ -76,6 +77,7 @@ export const getDashboard = async () => {
       customer_name: inv.customer_name,
       grand_total: inv.grand_total,
       created_at: inv.created_at,
+      status: inv.status || 'Paid',
     };
   });
 

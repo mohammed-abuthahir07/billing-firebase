@@ -26,7 +26,7 @@
   --text-muted: #94a3b8;
   --text-light: #f8fafc;
 
-  --border-color: #e2e8f0;
+  --border-color: var(--border-color);
   --border-light: #f1f5f9;
 
   /* Shadows */
@@ -310,7 +310,7 @@ a {
 .saas-table tbody tr:nth-child(10) { animation-delay: 400ms; }
 
 .saas-table tbody tr:hover:not(:has(.empty-table-cell)) {
-  background: #eff6ff;
+  background: var(--table-row-hover);
   transform: translateX(2px);
 }
 
@@ -542,7 +542,7 @@ a {
 /* Printing styling */
 @media print {
   body {
-    background: white;
+    background: var(--bg-card);
     color: black;
   }
   .navbar,

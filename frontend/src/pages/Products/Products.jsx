@@ -132,7 +132,7 @@ const Products = () => {
       const list = Array.isArray(data) ? data : (data.products || []);
       setProducts(list);
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.error || 'Failed to load products.';
+      const msg = err?.message || 'Failed to load products.';
       setError(msg);
     } finally {
       setLoading(false);
@@ -220,25 +220,45 @@ const Products = () => {
       setProducts(prev => prev.filter(p => p.id !== id));
       showToast('Product variant deleted successfully.');
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.error || 'Failed to delete product.';
-      showToast(msg, 'error');
+      showToast(err.message || 'Failed to delete product.', 'error');
     }
+  };
+
+  const validateProductForm = () => {
+    if (!formData.itemName.trim()) return 'Product name is required.';
+    const gst = Number(formData.gst);
+    if (formData.gst === '' || Number.isNaN(gst) || gst < 0 || gst > 100) {
+      return 'Enter valid GST (0-100).';
+    }
+    const price = Number(formData.sellingPrice);
+    if (!(price > 0)) return 'Enter a valid positive price.';
+    const weight = Number(formData.packageWeight);
+    if (!(weight > 0)) return 'Enter a positive weight.';
+    if (formData.quantity === '' || formData.quantity === null) return 'Stock count is required.';
+    const quantity = Number(formData.quantity);
+    if (!Number.isInteger(quantity) || quantity < 0) return 'Stock cannot be negative.';
+    return '';
   };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    const validationError = validateProductForm();
+    if (validationError) {
+      showToast(validationError, 'error');
+      return;
+    }
     setSubmitting(true);
 
     const payload = {
       itemName: formData.itemName.trim(),
       category: formData.category,
-      sku: formData.sku.trim() || `PROD-${Math.floor(Math.random() * 100000)}`,
+      sku: formData.sku.trim() || `PROD-${10000 + Math.floor(Math.random() * 90000)}`,
       description: formData.description.trim(),
-      gst: parseFloat(formData.gst) || 0,
+      gst: parseFloat(formData.gst),
       packageWeight: parseFloat(formData.packageWeight),
       weightUnit: formData.weightUnit.trim(),
       sellingPrice: parseFloat(formData.sellingPrice),
-      quantity: parseInt(formData.quantity, 10) || 0,
+      quantity: parseInt(formData.quantity, 10),
     };
 
     try {
@@ -252,8 +272,7 @@ const Products = () => {
       setIsModalOpen(false);
       await fetchProducts();
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.error || 'Operation failed. Please try again.';
-      showToast(msg, 'error');
+      showToast(err.message || 'Operation failed. Please try again.', 'error');
     } finally {
       setSubmitting(false);
     }

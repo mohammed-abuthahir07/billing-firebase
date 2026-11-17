@@ -1,0 +1,131 @@
+.deleted-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.deleted-search {
+  flex: 1 1 280px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--input-bg);
+  color: var(--text-muted);
+}
+
+.deleted-search input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.deleted-search input::placeholder {
+  color: var(--text-muted);
+}
+
+.deleted-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.deleted-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 150px;
+}
+
+.deleted-field span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.deleted-field select {
+  height: 44px;
+  width: 100%;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.deleted-reset {
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.deleted-reset:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.bills-container .table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bills-container .bills-table {
+  min-width: 720px;
+}
+
+.bills-container .empty-table-cell {
+  min-width: 0;
+}
+
+@media (max-width: 860px) {
+  .deleted-toolbar,
+  .deleted-filters,
+  .deleted-search,
+  .deleted-field,
+  .deleted-reset {
+    width: 100%;
+  }
+
+  .deleted-filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .deleted-reset {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 520px) {
+  .deleted-toolbar {
+    padding: 12px;
+  }
+
+  .deleted-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .bills-container .bills-header h1 {
+    font-size: 1.35rem;
+  }
+}

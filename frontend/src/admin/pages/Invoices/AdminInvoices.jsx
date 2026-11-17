@@ -42,6 +42,8 @@ const formatDate = (dateStr) => {
 const AdminInvoices = () => {
     const [invoices, setInvoices] = useState([]);
     const [companiesList, setCompaniesList] = useState([]);
+    const [metrics, setMetrics] = useState({ totalRevenue: 0, totalGST: 0, averageTicket: 0, totalInvoices: 0 });
+    const [salesNotice, setSalesNotice] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -65,6 +67,15 @@ const AdminInvoices = () => {
             const data = await getAdminInvoices();
             setInvoices(data.invoices || []);
             setCompaniesList(data.companiesList || []);
+            setMetrics({
+                totalRevenue: data.totalRevenue || 0,
+                totalGST: data.totalGST || 0,
+                averageTicket: data.averageTicket || 0,
+                totalInvoices: data.totalInvoices || 0,
+            });
+            setSalesNotice(data.salesRecordsBlocked
+                ? "Sales records could not be read. Revenue uses dashboard counters or active invoices only."
+                : "");
         } catch (err) {
             console.error("Failed to load invoices:", err);
             setError(err.message || "Failed to load invoices.");
@@ -120,10 +131,10 @@ const AdminInvoices = () => {
     }, [invoices, search, selectedCompany, startDate, endDate, sortOrder]);
 
     // KPI Metrics derived from all loaded invoices
-    const totalCount = invoices.length;
-    const totalRevenue = invoices.reduce((sum, i) => sum + i.grandTotal, 0);
-    const totalGST = invoices.reduce((sum, i) => sum + i.gstAmount, 0);
-    const avgInvoice = totalCount > 0 ? totalRevenue / totalCount : 0;
+    const totalCount = metrics.totalInvoices || invoices.length;
+    const totalRevenue = metrics.totalRevenue;
+    const totalGST = metrics.totalGST;
+    const avgInvoice = metrics.averageTicket;
 
     // Pagination calculations
     const totalPages = Math.ceil(filteredInvoices.length / PAGE_SIZE) || 1;
@@ -175,7 +186,8 @@ const AdminInvoices = () => {
                 </div>
             </div>
 
-            {/* KPI Cards */}
+            {salesNotice && <p className="invoices-subtitle">{salesNotice}</p>}
+            {error && <p className="invoices-subtitle">{error}</p>}
             <div className="invoices-kpi-grid">
                 <div className="kpi-card blue">
                     <div className="kpi-top">
@@ -192,7 +204,7 @@ const AdminInvoices = () => {
                         <div className="kpi-icon"><IndianRupee size={19} /></div>
                     </div>
                     <div className="kpi-value">{formatMoney(totalRevenue)}</div>
-                    <span className="kpi-hint">All-time billed sales</span>
+                    <span className="kpi-hint">Active invoices. Revenue keeps completely deleted sales.</span>
                 </div>
 
                 <div className="kpi-card purple">

@@ -3,7 +3,6 @@ import {
     Settings as SettingsIcon,
     User,
     Moon,
-    Sun,
     Lock,
     Info,
     Save,
@@ -21,6 +20,7 @@ import {
     getAppInformation,
 } from "../../services/adminSettingsService";
 import { useAdminUI } from "../../context/AdminUIContext";
+import ThemePicker from "../../../components/ThemePicker/ThemePicker";
 import "./AdminSettings.css";
 
 const AdminSettings = () => {
@@ -149,6 +149,12 @@ const AdminSettings = () => {
                 </button>
                 
                 <button
+                    className={`tab-btn ${activeTab === "appearance" ? "active" : ""}`}
+                    onClick={() => setActiveTab("appearance")}
+                >
+                    <Moon size={16} /> Appearance
+                </button>
+                <button
                     className={`tab-btn ${activeTab === "security" ? "active" : ""}`}
                     onClick={() => setActiveTab("security")}
                 >
@@ -211,47 +217,11 @@ const AdminSettings = () => {
                         <p>Customize the visual theme for your Admin Portal. This setting is scoped exclusively to your Admin session.</p>
                     </div>
 
-                    <div className="theme-options-grid">
-                        {/* Light theme option */}
-                        <div
-                            className={`theme-card ${adminTheme === "light" ? "active" : ""}`}
-                            onClick={() => setAdminTheme("light")}
-                            role="button"
-                            tabIndex={0}
-                        >
-                            <div className="theme-preview-box light">
-                                <div className="preview-sidebar" />
-                                <div className="preview-content">
-                                    <div className="preview-bar" />
-                                    <div className="preview-rect" />
-                                </div>
-                            </div>
-                            <div className="theme-card-footer">
-                                <strong>Light Mode</strong>
-                                {adminTheme === "light" && <span className="theme-badge">Active</span>}
-                            </div>
-                        </div>
-
-                        {/* Dark theme option */}
-                        <div
-                            className={`theme-card ${adminTheme === "dark" ? "active" : ""}`}
-                            onClick={() => setAdminTheme("dark")}
-                            role="button"
-                            tabIndex={0}
-                        >
-                            <div className="theme-preview-box dark">
-                                <div className="preview-sidebar" />
-                                <div className="preview-content">
-                                    <div className="preview-bar" />
-                                    <div className="preview-rect" />
-                                </div>
-                            </div>
-                            <div className="theme-card-footer">
-                                <strong>Dark Mode</strong>
-                                {adminTheme === "dark" && <span className="theme-badge">Active</span>}
-                            </div>
-                        </div>
-                    </div>
+                    <ThemePicker
+                        value={adminTheme}
+                        onChange={setAdminTheme}
+                        label="Admin portal theme"
+                    />
                 </div>
             )}
 

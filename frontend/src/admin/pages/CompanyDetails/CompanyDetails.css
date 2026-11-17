@@ -67,7 +67,7 @@
 
 .page-title {
     margin: 0 0 6px;
-    color: #0f172a;
+    color: var(--text-primary);
     font-size: 28px;
     font-weight: 700;
     letter-spacing: -0.03em;
@@ -75,7 +75,7 @@
 
 .details-subtitle {
     margin: 0;
-    color: #64748b;
+    color: var(--text-secondary);
     font-size: 14px;
 }
 
@@ -89,9 +89,9 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-    color: #0f172a;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-primary);
     padding: 10px 14px;
     border-radius: 10px;
     font-size: 13px;
@@ -112,10 +112,10 @@
 }
 
 .company-card {
-    background: #ffffff;
+    background: var(--bg-card);
     padding: 24px 28px;
     border-radius: 16px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     box-shadow: 0 4px 15px rgba(15, 23, 42, 0.04);
     transition: transform 0.25s ease, box-shadow 0.25s ease;
     animation: cardIn 0.45s ease both;
@@ -149,7 +149,7 @@
 
 .company-header h2 {
     margin: 6px 0 6px;
-    color: #0f172a;
+    color: var(--text-primary);
     font-size: 24px;
     font-weight: 700;
     word-break: break-word;
@@ -159,7 +159,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #64748b;
+    color: var(--text-secondary);
     margin: 0;
     font-size: 14px;
     word-break: break-all;
@@ -185,10 +185,10 @@
 }
 
 .stat-card {
-    background: #ffffff;
+    background: var(--bg-card);
     padding: 20px;
     border-radius: 16px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
     transition: transform 0.25s ease, box-shadow 0.25s ease;
     animation: cardIn 0.45s ease both;
@@ -225,7 +225,7 @@
 }
 
 .stat-card h3 {
-    color: #64748b;
+    color: var(--text-secondary);
     margin: 0;
     font-size: 12px;
     font-weight: 700;
@@ -248,7 +248,7 @@
 .stat-icon.purple { background: #f5f3ff; color: #7c3aed; }
 
 .stat-card h2 {
-    color: #0f172a;
+    color: var(--text-primary);
     margin: 0;
     font-size: 24px;
     font-weight: 700;
@@ -260,18 +260,18 @@
     margin-top: 10px;
     font-size: 12px;
     font-weight: 600;
-    color: #64748b;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    color: var(--text-secondary);
+    background: var(--bg-muted);
+    border: 1px solid var(--border-color);
     padding: 4px 10px;
     border-radius: 999px;
 }
 
 .invoice-section {
-    background: #ffffff;
+    background: var(--bg-card);
     border-radius: 16px;
     padding: 22px 22px 10px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     box-shadow: 0 4px 15px rgba(15, 23, 42, 0.04);
     overflow-x: auto;
     animation: cardIn 0.5s ease both;
@@ -290,12 +290,12 @@
     margin: 0;
     font-size: 18px;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-primary);
 }
 
 .invoice-head p {
     margin: 4px 0 0;
-    color: #64748b;
+    color: var(--text-secondary);
     font-size: 13px;
 }
 
@@ -328,9 +328,9 @@
 
 .invoice-section td {
     padding: 14px 16px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--border-light);
     font-size: 14px;
-    color: #334155;
+    color: var(--text-secondary);
     white-space: nowrap;
 }
 
@@ -351,7 +351,7 @@
 
 .empty-row {
     text-align: center;
-    color: #64748b;
+    color: var(--text-secondary);
     padding: 36px 16px !important;
 }
 

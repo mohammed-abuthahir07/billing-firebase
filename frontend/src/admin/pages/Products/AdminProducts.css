@@ -6,7 +6,7 @@
     width: 100%;
     min-height: 100%;
     padding: 30px;
-    background: #f8fafc;
+    background: var(--bg-muted);
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -44,14 +44,14 @@
     margin: 0 0 6px;
     font-size: clamp(24px, 2.5vw, 32px);
     font-weight: 800;
-    color: #0f172a;
+    color: var(--text-primary);
     letter-spacing: -0.02em;
 }
 
 .products-subtitle {
     margin: 0;
     font-size: 14px;
-    color: #64748b;
+    color: var(--text-secondary);
 }
 
 .refresh-btn {
@@ -59,12 +59,12 @@
     align-items: center;
     gap: 8px;
     padding: 10px 18px;
-    background: #ffffff;
-    border: 1px solid #dce5f0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     font-size: 13px;
     font-weight: 700;
-    color: #334155;
+    color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
@@ -90,8 +90,8 @@
 }
 
 .kpi-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: 20px;
     box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
@@ -131,7 +131,7 @@
     font-weight: 800;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--text-secondary);
 }
 
 .kpi-icon {
@@ -151,7 +151,7 @@
 .kpi-value {
     font-size: 24px;
     font-weight: 800;
-    color: #0f172a;
+    color: var(--text-primary);
     line-height: 1.1;
     margin: 0 0 6px;
     font-variant-numeric: tabular-nums;
@@ -160,13 +160,13 @@
 .kpi-hint {
     font-size: 11px;
     font-weight: 600;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 /* Toolbar & Filters */
 .invoices-toolbar {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: 16px 20px;
     display: flex;
@@ -197,36 +197,36 @@
 .search-icon {
     position: absolute;
     left: 12px;
-    color: #94a3b8;
+    color: var(--text-muted);
     pointer-events: none;
 }
 
 .search-input-wrapper input {
     width: 100%;
     padding: 9px 12px 9px 36px;
-    border: 1.5px solid #dce5f0;
+    border: 1.5px solid var(--border-color);
     border-radius: 10px;
     font-size: 13.5px;
-    color: #0f172a;
-    background: #f8fafc;
+    color: var(--text-primary);
+    background: var(--bg-muted);
     transition: all 0.2s ease;
     box-sizing: border-box;
 }
 
 .search-input-wrapper input:focus {
     outline: none;
-    background: #ffffff;
+    background: var(--bg-card);
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
 .filter-select {
     padding: 9px 14px;
-    border: 1.5px solid #dce5f0;
+    border: 1.5px solid var(--border-color);
     border-radius: 10px;
     font-size: 13px;
-    color: #334155;
-    background: #f8fafc;
+    color: var(--text-secondary);
+    background: var(--bg-muted);
     cursor: pointer;
     font-weight: 600;
     transition: all 0.2s ease;
@@ -235,7 +235,7 @@
 .filter-select:focus {
     outline: none;
     border-color: #3b82f6;
-    background: #ffffff;
+    background: var(--bg-card);
 }
 
 .toolbar-right {
@@ -247,7 +247,7 @@
 .results-count {
     font-size: 13px;
     font-weight: 700;
-    color: #64748b;
+    color: var(--text-secondary);
 }
 
 .clear-filters-btn {
@@ -299,8 +299,8 @@
 
 /* Table Card */
 .products-table-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
@@ -331,14 +331,14 @@
 
 .products-table td {
     padding: 14px 16px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--border-light);
     font-size: 13.5px;
-    color: #334155;
+    color: var(--text-secondary);
     transition: background 0.15s ease;
 }
 
 .products-table tbody tr:hover td {
-    background: #f8fafc;
+    background: var(--bg-muted);
 }
 
 .products-table tbody tr:last-child td {
@@ -347,20 +347,20 @@
 
 .product-name-cell {
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-primary);
 }
 
 .company-cell {
     font-weight: 600;
-    color: #475569;
+    color: var(--text-secondary);
 }
 
 .sku-pill {
     font-size: 12px;
     font-weight: 600;
     font-family: monospace;
-    background: #f1f5f9;
-    color: #475569;
+    background: var(--bg-muted);
+    color: var(--text-secondary);
     padding: 3px 8px;
     border-radius: 6px;
 }
@@ -407,9 +407,9 @@
 }
 
 .action-btn.view {
-    background: #f1f5f9;
-    color: #334155;
-    border-color: #e2e8f0;
+    background: var(--bg-muted);
+    color: var(--text-secondary);
+    border-color: var(--border-color);
 }
 
 .action-btn.view:hover {
@@ -432,13 +432,13 @@
 .table-state h3 {
     margin: 0;
     font-size: 16px;
-    color: #1e293b;
+    color: var(--text-primary);
     font-weight: 700;
 }
 
 .table-state p {
     margin: 0;
-    color: #64748b;
+    color: var(--text-secondary);
     font-size: 13.5px;
 }
 
@@ -459,14 +459,14 @@
     justify-content: space-between;
     padding: 14px 20px;
     border-top: 1px solid #e2e8f0;
-    background: #ffffff;
+    background: var(--bg-card);
     flex-wrap: wrap;
     gap: 12px;
 }
 
 .pagination-info {
     font-size: 13px;
-    color: #64748b;
+    color: var(--text-secondary);
     font-weight: 600;
 }
 
@@ -478,9 +478,9 @@
 
 .page-btn {
     padding: 6px 12px;
-    border: 1px solid #dce5f0;
-    background: #ffffff;
-    color: #334155;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-secondary);
     border-radius: 8px;
     font-size: 12.5px;
     font-weight: 600;
@@ -489,7 +489,7 @@
 }
 
 .page-btn:hover:not(:disabled) {
-    background: #f1f5f9;
+    background: var(--bg-muted);
     border-color: #cbd5e1;
 }
 
@@ -523,7 +523,7 @@
 }
 
 .modal-dialog {
-    background: #ffffff;
+    background: var(--bg-card);
     border-radius: 18px;
     width: 100%;
     max-width: 580px;
@@ -541,7 +541,7 @@
 
 .modal-header {
     padding: 20px 24px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--border-light);
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -551,13 +551,13 @@
     margin: 0;
     font-size: 18px;
     font-weight: 800;
-    color: #0f172a;
+    color: var(--text-primary);
 }
 
 .modal-close-btn {
     background: transparent;
     border: none;
-    color: #64748b;
+    color: var(--text-secondary);
     cursor: pointer;
     padding: 4px;
     border-radius: 6px;
@@ -568,8 +568,8 @@
 }
 
 .modal-close-btn:hover {
-    background: #f1f5f9;
-    color: #0f172a;
+    background: var(--bg-muted);
+    color: var(--text-primary);
 }
 
 .modal-body {
@@ -588,8 +588,8 @@
 }
 
 .meta-block {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: var(--bg-muted);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 14px;
     display: flex;
@@ -610,11 +610,11 @@
     margin: 0;
     font-size: 14px;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-primary);
 }
 
 .meta-block small {
-    color: #64748b;
+    color: var(--text-secondary);
     font-size: 12px;
 }
 
@@ -627,19 +627,19 @@
 
 .close-btn {
     padding: 9px 20px;
-    background: #f1f5f9;
-    border: 1px solid #dce5f0;
+    background: var(--bg-muted);
+    border: 1px solid var(--border-color);
     border-radius: 10px;
     font-size: 13px;
     font-weight: 700;
-    color: #334155;
+    color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .close-btn:hover {
     background: #e2e8f0;
-    color: #0f172a;
+    color: var(--text-primary);
 }
 
 /* ==========================================

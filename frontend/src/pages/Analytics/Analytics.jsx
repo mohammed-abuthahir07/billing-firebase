@@ -5,6 +5,10 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -22,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getUserAnalytics } from '../../services/userAnalyticsService';
+import { useChartColors } from '../../theme/useChartColors';
 import './Analytics.css';
 
 const toNumber = (value) => {
@@ -36,6 +41,8 @@ const formatCurrency = (value) =>
   })}`;
 
 const formatCount = (value) => toNumber(value).toLocaleString('en-IN');
+
+const PIE_COLORS = ['#2563eb', '#0f766e', '#7c3aed', '#d97706', '#db2777', '#64748b'];
 
 const ChartTooltip = ({ active, payload, label, prefix = '', isMoney = false }) => {
   if (!active || !payload?.length) return null;
@@ -64,11 +71,7 @@ const Analytics = () => {
       const payload = await getUserAnalytics();
       setData(payload);
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          err.response?.data?.error ||
-          'Failed to load analytics. Please try again.'
-      );
+      setError(err.message || 'Failed to load analytics. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -82,6 +85,7 @@ const Analytics = () => {
   const period = data?.period || {};
   const yearSeries = data?.yearSeries || [];
   const topCustomersYear = data?.topCustomersYear || [];
+  const topProductsMonth = data?.topProductsMonth || [];
   const topCustomersMonth = data?.topCustomersMonth || [];
   const bestMonth = data?.bestCustomerMonth;
   const bestYear = data?.bestCustomerYear;
@@ -129,9 +133,29 @@ const Analytics = () => {
       : '0.0',
   }));
 
+  const chartColors = useChartColors();
+  const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 768px)').matches);
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 768px)');
+    const onChange = () => setCompact(query.matches);
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, []);
+  const chartHeight = compact ? 230 : 320;
+  const currentPoint = yearSeries[yearSeries.length - 1];
+  const previousPoint = yearSeries.length > 1 ? yearSeries[yearSeries.length - 2] : null;
+  const monthChange = previousPoint && toNumber(previousPoint.revenue) > 0 && currentPoint
+    ? ((toNumber(currentPoint.revenue) - toNumber(previousPoint.revenue)) / toNumber(previousPoint.revenue)) * 100
+    : null;
+  const peakMonth = yearSeries.reduce((best, point) => (
+    !best || toNumber(point.revenue) > toNumber(best.revenue) ? point : best
+  ), null);
+  const averageYearInvoice = toNumber(summary.yearInvoices) > 0
+    ? toNumber(summary.yearRevenue) / toNumber(summary.yearInvoices)
+    : null;
   const chartAxis = {
-    tick: { fill: '#64748b', fontSize: 12 },
-    axisLine: { stroke: '#e2e8f0' },
+    tick: { fill: chartColors.tick, fontSize: 12 },
+    axisLine: { stroke: chartColors.grid },
     tickLine: false,
   };
 
@@ -168,6 +192,12 @@ const Analytics = () => {
           </button>
         </div>
       )}
+      {data?.salesRecordsBlocked && (
+        <div className="ua-error animate-scale-up">
+          <AlertCircle size={20} />
+          <span>Sales records could not be read. These totals use active invoices only, so completely deleted invoices may be missing.</span>
+        </div>
+      )}
 
       <section className="ua-kpi-grid">
         {kpis.map((card, index) => {
@@ -190,27 +220,6 @@ const Analytics = () => {
         })}
       </section>
 
-      <section className="ua-best-grid animate-slide-up delay-2">
-        <article className="ua-best-card">
-          <p className="ua-best-kicker">Best customer this month</p>
-          <h2>{bestMonth?.customerName || 'No sales yet'}</h2>
-          <p className="ua-best-meta">
-            {bestMonth
-              ? `${formatCurrency(bestMonth.revenue)} · ${formatCount(bestMonth.invoices)} invoices`
-              : `No invoices in ${period.monthLabel || 'this month'}.`}
-          </p>
-        </article>
-        <article className="ua-best-card year">
-          <p className="ua-best-kicker">Best customer this year</p>
-          <h2>{bestYear?.customerName || 'No sales yet'}</h2>
-          <p className="ua-best-meta">
-            {bestYear
-              ? `${formatCurrency(bestYear.revenue)} · ${formatCount(bestYear.invoices)} invoices`
-              : `No invoices in ${period.yearLabel || 'this year'}.`}
-          </p>
-        </article>
-      </section>
-
       {loading ? (
         <div className="ua-charts">
           {[1, 2, 3, 4].map((item) => (
@@ -223,7 +232,7 @@ const Analytics = () => {
       ) : (
         <>
           <div className="ua-charts">
-            <section className="ua-chart-card animate-slide-up delay-3">
+            <section className="ua-chart-card ua-chart-wide animate-slide-up delay-3">
               <div className="ua-chart-head">
                 <div>
                   <h2>Revenue This Year</h2>
@@ -231,21 +240,42 @@ const Analytics = () => {
                 </div>
                 <span className="ua-tag">INR</span>
               </div>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={yearSeries} barSize={28}>
+              <div className="ua-chart-stage">
+              <ResponsiveContainer width="100%" height={chartHeight}>
+                <AreaChart data={yearSeries} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="uaRevenueFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#10b981" />
-                      <stop offset="100%" stopColor="#059669" />
+                    <linearGradient id="uaRevenueArea" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#2563eb" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#2563eb" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                  <XAxis dataKey="month" {...chartAxis} />
-                  <YAxis {...chartAxis} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    interval={compact ? 1 : 0}
+                    angle={compact ? -35 : 0}
+                    textAnchor={compact ? 'end' : 'middle'}
+                    height={compact ? 52 : 32}
+                    tick={{ fill: chartColors.tick, fontSize: compact ? 10 : 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis {...chartAxis} width={compact ? 40 : 56} />
                   <Tooltip content={<ChartTooltip isMoney />} />
-                  <Bar dataKey="revenue" fill="url(#uaRevenueFill)" radius={[8, 8, 0, 0]} animationDuration={1100} />
-                </BarChart>
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#2563eb"
+                    strokeWidth={2.5}
+                    fill="url(#uaRevenueArea)"
+                    dot={{ r: 3, fill: '#2563eb', strokeWidth: 0 }}
+                    activeDot={{ r: 5 }}
+                    animationDuration={1200}
+                    animationEasing="ease-out"
+                  />
+                </AreaChart>
               </ResponsiveContainer>
+              </div>
             </section>
 
             <section className="ua-chart-card animate-slide-up delay-4">
@@ -256,29 +286,32 @@ const Analytics = () => {
                 </div>
                 <span className="ua-tag">Invoices</span>
               </div>
-              <ResponsiveContainer width="100%" height={260}>
-                <AreaChart data={yearSeries}>
+              <div className="ua-chart-stage">
+              <ResponsiveContainer width="100%" height={chartHeight}>
+                <BarChart data={yearSeries} barCategoryGap={compact ? '28%' : '22%'}>
                   <defs>
-                    <linearGradient id="uaInvoiceFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.04} />
+                    <linearGradient id="uaInvoiceBar" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#5eead4" />
+                      <stop offset="100%" stopColor="#0f766e" />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                  <XAxis dataKey="month" {...chartAxis} />
-                  <YAxis allowDecimals={false} {...chartAxis} />
-                  <Tooltip content={<ChartTooltip prefix="Invoices: " />} />
-                  <Area
-                    type="monotone"
-                    dataKey="invoices"
-                    stroke="#d97706"
-                    strokeWidth={3}
-                    fill="url(#uaInvoiceFill)"
-                    dot={{ r: 4, fill: '#d97706', strokeWidth: 0 }}
-                    animationDuration={1100}
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    interval={compact ? 1 : 0}
+                    angle={compact ? -35 : 0}
+                    textAnchor={compact ? 'end' : 'middle'}
+                    height={compact ? 52 : 32}
+                    tick={{ fill: chartColors.tick, fontSize: compact ? 10 : 12 }}
+                    axisLine={false}
+                    tickLine={false}
                   />
-                </AreaChart>
+                  <YAxis allowDecimals={false} {...chartAxis} width={compact ? 28 : 36} />
+                  <Tooltip content={<ChartTooltip prefix="Invoices: " />} cursor={{ fill: 'rgba(15, 118, 110, 0.08)' }} />
+                  <Bar dataKey="invoices" fill="url(#uaInvoiceBar)" radius={[8, 8, 0, 0]} maxBarSize={42} animationDuration={1100} animationEasing="ease-out" />
+                </BarChart>
               </ResponsiveContainer>
+              </div>
             </section>
 
             <section className="ua-chart-card animate-slide-up delay-5">
@@ -291,12 +324,12 @@ const Analytics = () => {
               </div>
               {topCustomersMonth.length > 0 ? (
                 <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={topCustomersMonth} barSize={22}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                    <XAxis dataKey="customerName" {...chartAxis} interval={0} tick={{ fill: '#64748b', fontSize: 11 }} />
+                  <BarChart data={topCustomersMonth.slice(0, 5)} barSize={22}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                    <XAxis dataKey="customerName" interval={0} tickFormatter={(name) => (String(name).length > 12 ? `${String(name).slice(0, 11)}…` : name)} tick={{ fill: chartColors.tick, fontSize: compact ? 10 : 11 }} axisLine={false} tickLine={false} height={compact ? 48 : 32} angle={compact ? -30 : 0} textAnchor={compact ? 'end' : 'middle'} />
                     <YAxis {...chartAxis} />
                     <Tooltip content={<ChartTooltip isMoney />} />
-                    <Bar dataKey="revenue" fill="#2563eb" radius={[8, 8, 0, 0]} animationDuration={1100} />
+                    <Bar dataKey="revenue" fill="#2563eb" radius={[8, 8, 0, 0]} maxBarSize={36} animationDuration={1100} animationEasing="ease-out" />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -314,19 +347,108 @@ const Analytics = () => {
               </div>
               {topCustomersYear.length > 0 ? (
                 <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={topCustomersYear} barSize={22}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                    <XAxis dataKey="customerName" {...chartAxis} interval={0} tick={{ fill: '#64748b', fontSize: 11 }} />
+                  <BarChart data={topCustomersYear.slice(0, 5)} barSize={22}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                    <XAxis dataKey="customerName" interval={0} tickFormatter={(name) => (String(name).length > 12 ? `${String(name).slice(0, 11)}…` : name)} tick={{ fill: chartColors.tick, fontSize: compact ? 10 : 11 }} axisLine={false} tickLine={false} height={compact ? 48 : 32} angle={compact ? -30 : 0} textAnchor={compact ? 'end' : 'middle'} />
                     <YAxis {...chartAxis} />
                     <Tooltip content={<ChartTooltip isMoney />} />
-                    <Bar dataKey="revenue" fill="#7c3aed" radius={[8, 8, 0, 0]} animationDuration={1100} />
+                    <Bar dataKey="revenue" fill="#7c3aed" radius={[8, 8, 0, 0]} maxBarSize={36} animationDuration={1200} animationEasing="ease-out" />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="ua-empty">No customer purchases this year.</div>
               )}
             </section>
+
+            <section className="ua-chart-card animate-slide-up delay-6">
+              <div className="ua-chart-head">
+                <div>
+                  <h2>Top products this month</h2>
+                  <p>Units sold, from this month’s invoices</p>
+                </div>
+                <span className="ua-tag">Products</span>
+              </div>
+              {topProductsMonth.length > 0 ? (
+                <ResponsiveContainer width="100%" height={compact ? 300 : 260}>
+                  <PieChart>
+                    <Pie
+                      data={topProductsMonth.slice(0, 6)}
+                      dataKey="quantity"
+                      nameKey="name"
+                      cx={compact ? '50%' : '38%'}
+                      cy="50%"
+                      outerRadius={compact ? 78 : 88}
+                      paddingAngle={2}
+                      animationDuration={1200}
+                      animationEasing="ease-out"
+                    >
+                      {topProductsMonth.slice(0, 6).map((product, index) => (
+                        <Cell key={product.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value, name) => [`${formatCount(value)} sold`, name]} />
+                    <Legend
+                      layout={compact ? 'horizontal' : 'vertical'}
+                      align={compact ? 'center' : 'right'}
+                      verticalAlign={compact ? 'bottom' : 'middle'}
+                      wrapperStyle={{ fontSize: 12, color: chartColors.tick }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="ua-empty">No product sales recorded this month.</div>
+              )}
+            </section>
           </div>
+
+          <section className="ua-insight-row">
+            <article className="ua-insight">
+              <p>Average invoice this year</p>
+              <strong>{averageYearInvoice == null ? '—' : formatCurrency(averageYearInvoice)}</strong>
+              <span>Year revenue divided by the invoice count already calculated.</span>
+            </article>
+            <article className="ua-insight">
+              <p>Highest revenue month</p>
+              <strong>{peakMonth && toNumber(peakMonth.revenue) > 0 ? peakMonth.month : '—'}</strong>
+              <span>{peakMonth && toNumber(peakMonth.revenue) > 0 ? formatCurrency(peakMonth.revenue) : 'No revenue recorded this year.'}</span>
+            </article>
+            <article className="ua-insight">
+              <p>{previousPoint ? `${currentPoint?.month || 'This month'} vs ${previousPoint.month}` : 'Month comparison'}</p>
+              <strong>
+                {monthChange == null
+                  ? formatCurrency(currentPoint?.revenue)
+                  : `${monthChange > 0 ? '+' : ''}${monthChange.toFixed(1)}%`}
+              </strong>
+              <span>
+                {!previousPoint
+                  ? 'The previous month is not in this year’s series.'
+                  : toNumber(previousPoint.revenue) <= 0
+                    ? `${previousPoint.month} has no revenue, so a percentage is not shown.`
+                    : `${formatCurrency(currentPoint?.revenue)} against ${formatCurrency(previousPoint.revenue)}.`}
+              </span>
+            </article>
+          </section>
+
+          <section className="ua-best-grid">
+            <article className="ua-best-card">
+              <p className="ua-best-kicker">Best customer this month</p>
+              <h2>{bestMonth?.customerName || 'No sales yet'}</h2>
+              <p className="ua-best-meta">
+                {bestMonth
+                  ? `${formatCurrency(bestMonth.revenue)} · ${formatCount(bestMonth.invoices)} invoices`
+                  : `No invoices in ${period.monthLabel || 'this month'}.`}
+              </p>
+            </article>
+            <article className="ua-best-card year">
+              <p className="ua-best-kicker">Best customer this year</p>
+              <h2>{bestYear?.customerName || 'No sales yet'}</h2>
+              <p className="ua-best-meta">
+                {bestYear
+                  ? `${formatCurrency(bestYear.revenue)} · ${formatCount(bestYear.invoices)} invoices`
+                  : `No invoices in ${period.yearLabel || 'this year'}.`}
+              </p>
+            </article>
+          </section>
 
           <section className="ua-table-card animate-slide-up delay-6">
             <div className="ua-chart-head">
@@ -347,7 +469,7 @@ const Analytics = () => {
                     <th>Customer</th>
                     <th>Invoices</th>
                     <th>Total Purchase</th>
-              
+                    <th>Share</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -360,7 +482,7 @@ const Analytics = () => {
                         <td className="ua-customer">{customer.customerName}</td>
                         <td>{formatCount(customer.invoices)}</td>
                         <td className="ua-money">{formatCurrency(customer.revenue)}</td>
-                        
+                        <td><span className="ua-share">{customer.share}%</span></td>
                       </tr>
                     ))
                   ) : (

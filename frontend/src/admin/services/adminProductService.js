@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { collection, collectionGroup, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "../../firebase/firebase";
 
 /**
@@ -11,6 +11,21 @@ export const getAdminProducts = async () => {
         const allProducts = [];
         const companiesMap = new Map();
         const categoriesSet = new Set();
+        const productsByUser = new Map();
+        let useGroupedProducts = false;
+        try {
+            const grouped = await getDocs(collectionGroup(db, "products"));
+            grouped.forEach((docSnap) => {
+                const userId = docSnap.ref.parent.parent?.id;
+                if (!userId) return;
+                const list = productsByUser.get(userId) || [];
+                list.push(docSnap);
+                productsByUser.set(userId, list);
+            });
+            useGroupedProducts = true;
+        } catch {
+            productsByUser.clear();
+        }
 
         for (const uDoc of usersSnap.docs) {
             const uId = uDoc.id;
@@ -28,8 +43,10 @@ export const getAdminProducts = async () => {
             companiesMap.set(uId, companyName);
 
             try {
-                const pSnap = await getDocs(collection(db, `users/${uId}/products`));
-                pSnap.forEach((docSnap) => {
+                const productDocs = useGroupedProducts
+                    ? (productsByUser.get(uId) || [])
+                    : (await getDocs(collection(db, `users/${uId}/products`))).docs;
+                productDocs.forEach((docSnap) => {
                     const d = docSnap.data();
                     const qty = typeof d.quantity === "number" ? d.quantity : (Number(d.quantity) || 0);
                     const category = d.category || "General";

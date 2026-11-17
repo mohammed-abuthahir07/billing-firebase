@@ -7,6 +7,7 @@ if (!admin.apps.length) {
 
 export { createInvoice } from "./billing/createInvoice";
 export { deleteProduct } from "./products/deleteProduct";
+export { sendOutOfStockEmail } from "./products/sendOutOfStockEmail";
 export { getMonthlyReportSummary } from "./reports/monthlyReports";
 export { getAdminDashboard } from "./admin/adminDashboard";
 export { getAdminCompanies, getAdminCompanyDetails } from "./admin/adminCompanies";

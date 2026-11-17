@@ -1,5 +1,7 @@
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { collection, collectionGroup, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "../../firebase/firebase";
+import { loadMergedRecords } from "../../utils/salesHistory";
+import { isPermissionDenied, money, recordGrandTotal } from "../../utils/salesMerge";
 
 /**
  * Fetch all invoices across all registered companies for the Admin panel.
@@ -10,6 +12,25 @@ export const getAdminInvoices = async () => {
         const usersSnap = await getDocs(collection(db, "users"));
         const allInvoices = [];
         const companiesMap = new Map();
+        const invoicesByUser = new Map();
+        let groupedInvoices = false;
+        try {
+            const grouped = await getDocs(collectionGroup(db, "invoices"));
+            grouped.forEach((docSnap) => {
+                const userId = docSnap.ref.parent.parent?.id;
+                if (!userId) return;
+                const list = invoicesByUser.get(userId) || [];
+                list.push(docSnap);
+                invoicesByUser.set(userId, list);
+            });
+            groupedInvoices = true;
+        } catch (error) {
+            if (!isPermissionDenied(error)) throw error;
+        }
+
+        let platformSales = 0;
+        let totalGST = 0;
+        let salesRecordsBlocked = false;
 
         for (const uDoc of usersSnap.docs) {
             const uId = uDoc.id;
@@ -32,12 +53,15 @@ export const getAdminInvoices = async () => {
             companiesMap.set(uId, companyName);
 
             try {
-                const invSnap = await getDocs(collection(db, `users/${uId}/invoices`));
-                invSnap.forEach((docSnap) => {
+                const invoiceDocs = groupedInvoices
+                    ? (invoicesByUser.get(uId) || [])
+                    : (await getDocs(collection(db, `users/${uId}/invoices`))).docs;
+                invoiceDocs.forEach((docSnap) => {
                     const d = docSnap.data();
                     const subtotal = Number(d.subtotal) || 0;
                     const gstAmount = Number(d.gst_amount) || 0;
                     const grandTotal = Number(d.grand_total) || 0;
+                    totalGST += gstAmount;
 
                     const dateStr = d.created_at || (d.timestamp?.toDate ? d.timestamp.toDate().toISOString() : new Date().toISOString());
 
@@ -73,17 +97,30 @@ export const getAdminInvoices = async () => {
                         },
                     });
                 });
-            } catch (_) {
-                // Non-blocking for empty invoice collections
+    } catch (error) {
+      if (!isPermissionDenied(error)) throw error;
+    }
+
+            let userRevenue = 0;
+            try {
+                const statsSnap = await getDoc(doc(db, `users/${uId}/stats/dashboard`));
+                if (statsSnap.exists()) userRevenue = money(statsSnap.data().totalRevenue);
+            } catch (_) {}
+
+            if (userRevenue <= 0) {
+                const merged = await loadMergedRecords(uId);
+                if (merged.salesRecordsBlocked) salesRecordsBlocked = true;
+                userRevenue = merged.records.reduce((sum, record) => sum + recordGrandTotal(record), 0);
             }
+            platformSales += userRevenue;
         }
 
         // Sort by invoiceDate descending by default
         allInvoices.sort((a, b) => new Date(b.invoiceDate) - new Date(a.invoiceDate));
 
         const totalInvoices = allInvoices.length;
-        const totalRevenue = allInvoices.reduce((sum, inv) => sum + inv.grandTotal, 0);
-        const totalGST = allInvoices.reduce((sum, inv) => sum + inv.gstAmount, 0);
+        const totalRevenue = Number(platformSales.toFixed(2));
+        const averageTicket = totalInvoices > 0 ? totalRevenue / totalInvoices : 0;
 
         const companiesList = Array.from(companiesMap.entries()).map(([id, name]) => ({
             id,
@@ -94,8 +131,10 @@ export const getAdminInvoices = async () => {
             success: true,
             invoices: allInvoices,
             totalInvoices,
-            totalRevenue: Number(totalRevenue.toFixed(2)),
+            totalRevenue,
             totalGST: Number(totalGST.toFixed(2)),
+            averageTicket,
+            salesRecordsBlocked,
             companiesList,
         };
     } catch (err) {

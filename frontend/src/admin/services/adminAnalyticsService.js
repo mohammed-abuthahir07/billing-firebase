@@ -1,5 +1,7 @@
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../firebase/firebase";
+import { loadMergedRecords } from "../../utils/salesHistory";
+import { recordGrandTotal, recordMonth, recordYear } from "../../utils/salesMerge";
 
 const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -36,27 +38,31 @@ export const getRevenueAnalytics = async () => {
         MONTHS_SHORT.forEach((m) => monthlyRevenue.set(m, 0));
 
         const usersSnap = await getDocs(collection(db, "users"));
+        let salesRecordsBlocked = false;
         for (const uDoc of usersSnap.docs) {
-            try {
-                const invSnap = await getDocs(collection(db, `users/${uDoc.id}/invoices`));
-                invSnap.forEach((invDoc) => {
-                    const data = invDoc.data();
-                    const d = data.created_at ? new Date(data.created_at) : new Date();
-                    if (d.getFullYear() === currentYear) {
-                        const m = MONTHS_SHORT[d.getMonth()];
-                        const rev = Number(data.grand_total) || 0;
-                        monthlyRevenue.set(m, (monthlyRevenue.get(m) || 0) + rev);
-                    }
-                });
-            } catch (iErr) {}
+            const merged = await loadMergedRecords(uDoc.id, { year: currentYear });
+            if (merged.salesRecordsBlocked) salesRecordsBlocked = true;
+            merged.records.forEach((record) => {
+                if (recordYear(record) !== currentYear) return;
+                const month = MONTHS_SHORT[recordMonth(record) - 1];
+                if (!month) return;
+                const rev = recordGrandTotal(record);
+                monthlyRevenue.set(month, (monthlyRevenue.get(month) || 0) + rev);
+            });
         }
-        return MONTHS_SHORT.map((m) => ({
-            month: m,
-            revenue: (monthlyRevenue.get(m) || 0).toFixed(2),
-        }));
+        return {
+            points: MONTHS_SHORT.map((m) => ({
+                month: m,
+                revenue: (monthlyRevenue.get(m) || 0).toFixed(2),
+            })),
+            salesRecordsBlocked,
+        };
     } catch (err) {
         console.error("[RevenueAnalytics] Fetch error:", err);
-        return MONTHS_SHORT.map((m) => ({ month: m, revenue: "0.00" }));
+        return {
+            points: MONTHS_SHORT.map((m) => ({ month: m, revenue: "0.00" })),
+            salesRecordsBlocked: false,
+        };
     }
 };
 
@@ -68,26 +74,30 @@ export const getInvoiceAnalytics = async () => {
         MONTHS_SHORT.forEach((m) => monthlyInvoices.set(m, 0));
 
         const usersSnap = await getDocs(collection(db, "users"));
+        let salesRecordsBlocked = false;
         for (const uDoc of usersSnap.docs) {
-            try {
-                const invSnap = await getDocs(collection(db, `users/${uDoc.id}/invoices`));
-                invSnap.forEach((invDoc) => {
-                    const data = invDoc.data();
-                    const d = data.created_at ? new Date(data.created_at) : new Date();
-                    if (d.getFullYear() === currentYear) {
-                        const m = MONTHS_SHORT[d.getMonth()];
-                        monthlyInvoices.set(m, (monthlyInvoices.get(m) || 0) + 1);
-                    }
-                });
-            } catch (iErr) {}
+            const merged = await loadMergedRecords(uDoc.id, { year: currentYear });
+            if (merged.salesRecordsBlocked) salesRecordsBlocked = true;
+            merged.records.forEach((record) => {
+                if (recordYear(record) !== currentYear) return;
+                const month = MONTHS_SHORT[recordMonth(record) - 1];
+                if (!month) return;
+                monthlyInvoices.set(month, (monthlyInvoices.get(month) || 0) + 1);
+            });
         }
-        return MONTHS_SHORT.map((m) => ({
-            month: m,
-            invoices: monthlyInvoices.get(m) || 0,
-        }));
+        return {
+            points: MONTHS_SHORT.map((m) => ({
+                month: m,
+                invoices: monthlyInvoices.get(m) || 0,
+            })),
+            salesRecordsBlocked,
+        };
     } catch (err) {
         console.error("[InvoiceAnalytics] Fetch error:", err);
-        return MONTHS_SHORT.map((m) => ({ month: m, invoices: 0 }));
+        return {
+            points: MONTHS_SHORT.map((m) => ({ month: m, invoices: 0 })),
+            salesRecordsBlocked: false,
+        };
     }
 };
 

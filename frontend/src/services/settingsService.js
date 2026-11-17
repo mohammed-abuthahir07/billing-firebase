@@ -4,6 +4,7 @@ import {
   updatePassword,
   reauthenticateWithCredential,
   EmailAuthProvider,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth, db } from "../firebase/firebase";
 
@@ -119,6 +120,13 @@ export const changeUserPassword = async (currentPassword, newPassword) => {
   }
 
   return { success: true, message: "Password updated successfully." };
+};
+
+export const sendUserPasswordReset = async () => {
+  const user = auth.currentUser;
+  if (!user?.email) throw new Error("User not authenticated.");
+  await sendPasswordResetEmail(auth, user.email);
+  return { success: true, message: `Password reset email sent to ${user.email}.` };
 };
 
 export const getUserAppInformation = () => {

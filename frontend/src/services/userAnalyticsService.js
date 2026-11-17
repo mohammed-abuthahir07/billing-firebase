@@ -1,7 +1,31 @@
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db, auth } from '../firebase/firebase';
+import { auth } from '../firebase/firebase';
+import { loadMergedRecords } from '../utils/salesHistory';
+import { customerLabel, recordGrandTotal, recordMonth } from '../utils/salesMerge';
 
 const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function recordLocalDay(record) {
+  const year = Number(record?.year);
+  const month = Number(record?.month);
+  const day = Number(record?.day);
+  if (year && month && day) return { year, month, day };
+
+  const created = record?.created_at || record?.createdAt;
+  let date = null;
+  if (created && typeof created.toDate === 'function') date = created.toDate();
+  else if (created && typeof created.seconds === 'number') date = new Date(created.seconds * 1000);
+  else if (created) {
+    const parsed = new Date(created);
+    if (!Number.isNaN(parsed.getTime())) date = parsed;
+  }
+  if (!date) return null;
+  return { year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate() };
+}
+
+function sameLocalDay(record, day) {
+  const value = recordLocalDay(record);
+  return Boolean(value && day && value.year === day.year && value.month === day.month && value.day === day.day);
+}
 
 export const getUserAnalytics = async () => {
   const user = auth.currentUser;
@@ -22,22 +46,29 @@ export const getUserAnalytics = async () => {
       period,
       summary: { monthRevenue: 0, yearRevenue: 0, monthInvoices: 0, yearInvoices: 0 },
       yearSeries: MONTHS_SHORT.slice(0, currentMonth).map((m) => ({ month: m, revenue: 0, invoices: 0 })),
+      daySales: { today: 0, yesterday: 0 },
       topCustomersMonth: [],
       topCustomersYear: [],
       bestCustomerMonth: null,
       bestCustomerYear: null,
+      topProductsMonth: [],
+      topProductsYear: [],
     };
   }
 
-  const userId = user.uid;
-  const invoicesRef = collection(db, `users/${userId}/invoices`);
-  const q = query(invoicesRef, where('year', '==', currentYear));
-  const snap = await getDocs(q);
+  const { records, salesRecordsBlocked } = await loadMergedRecords(user.uid, { year: currentYear });
 
   let monthRevenue = 0;
   let yearRevenue = 0;
   let monthInvoices = 0;
-  let yearInvoices = snap.size;
+  let yearInvoices = records.length;
+  let todayRevenue = 0;
+  let yesterdayRevenue = 0;
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  const todayKey = { year: today.getFullYear(), month: today.getMonth() + 1, day: today.getDate() };
+  const yesterdayKey = { year: yesterday.getFullYear(), month: yesterday.getMonth() + 1, day: yesterday.getDate() };
 
   const monthlyTotals = new Map();
   for (let m = 1; m <= currentMonth; m++) {
@@ -46,14 +77,17 @@ export const getUserAnalytics = async () => {
 
   const customerYearMap = new Map();
   const customerMonthMap = new Map();
+  const productMonthMap = new Map();
+  const productYearMap = new Map();
 
-  snap.forEach((doc) => {
-    const inv = doc.data();
-    const invMonth = inv.month || (inv.created_at ? new Date(inv.created_at).getMonth() + 1 : 1);
-    const grandTotal = Number(inv.grand_total) || 0;
-    const customer = inv.customer_name || 'Walk-in Customer';
+  records.forEach((inv) => {
+    const invMonth = recordMonth(inv);
+    const grandTotal = recordGrandTotal(inv);
+    const customer = customerLabel(inv);
 
     yearRevenue += grandTotal;
+    if (sameLocalDay(inv, todayKey)) todayRevenue += grandTotal;
+    if (sameLocalDay(inv, yesterdayKey)) yesterdayRevenue += grandTotal;
 
     // Monthly breakdown
     if (invMonth <= currentMonth) {
@@ -72,6 +106,18 @@ export const getUserAnalytics = async () => {
       customerMonthMap.set(customer, {
         invoices: custMonth.invoices + 1,
         revenue: custMonth.revenue + grandTotal,
+      });
+
+    }
+
+    if (Array.isArray(inv.items)) {
+      inv.items.forEach((item) => {
+        const name = item.product_name || item.productName || 'Product';
+        const qty = Number(item.quantity) || 0;
+        productYearMap.set(name, (productYearMap.get(name) || 0) + qty);
+        if (invMonth === currentMonth) {
+          productMonthMap.set(name, (productMonthMap.get(name) || 0) + qty);
+        }
       });
     }
 
@@ -117,9 +163,22 @@ export const getUserAnalytics = async () => {
       yearInvoices,
     },
     yearSeries,
+    daySales: {
+      today: Number(todayRevenue.toFixed(2)),
+      yesterday: Number(yesterdayRevenue.toFixed(2)),
+    },
     topCustomersMonth,
     topCustomersYear,
     bestCustomerMonth: topCustomersMonth.length > 0 ? topCustomersMonth[0] : null,
     bestCustomerYear: topCustomersYear.length > 0 ? topCustomersYear[0] : null,
+    topProductsMonth: Array.from(productMonthMap.entries())
+      .map(([name, quantity]) => ({ name, quantity }))
+      .filter((product) => product.quantity > 0)
+      .sort((a, b) => b.quantity - a.quantity),
+    topProductsYear: Array.from(productYearMap.entries())
+      .map(([name, quantity]) => ({ name, quantity }))
+      .filter((product) => product.quantity > 0)
+      .sort((a, b) => b.quantity - a.quantity),
+    salesRecordsBlocked,
   };
 };

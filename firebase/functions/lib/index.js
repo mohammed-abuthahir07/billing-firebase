@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.setAdminClaim = exports.getAdminAnalytics = exports.getAdminCompanyDetails = exports.getAdminCompanies = exports.getAdminDashboard = exports.getMonthlyReportSummary = exports.deleteProduct = exports.createInvoice = void 0;
+exports.setAdminClaim = exports.getAdminAnalytics = exports.getAdminCompanyDetails = exports.getAdminCompanies = exports.getAdminDashboard = exports.getMonthlyReportSummary = exports.sendOutOfStockEmail = exports.deleteProduct = exports.createInvoice = void 0;
 const admin = __importStar(require("firebase-admin"));
 // Initialize Firebase Admin SDK
 if (!admin.apps.length) {
@@ -43,6 +43,8 @@ var createInvoice_1 = require("./billing/createInvoice");
 Object.defineProperty(exports, "createInvoice", { enumerable: true, get: function () { return createInvoice_1.createInvoice; } });
 var deleteProduct_1 = require("./products/deleteProduct");
 Object.defineProperty(exports, "deleteProduct", { enumerable: true, get: function () { return deleteProduct_1.deleteProduct; } });
+var sendOutOfStockEmail_1 = require("./products/sendOutOfStockEmail");
+Object.defineProperty(exports, "sendOutOfStockEmail", { enumerable: true, get: function () { return sendOutOfStockEmail_1.sendOutOfStockEmail; } });
 var monthlyReports_1 = require("./reports/monthlyReports");
 Object.defineProperty(exports, "getMonthlyReportSummary", { enumerable: true, get: function () { return monthlyReports_1.getMonthlyReportSummary; } });
 var adminDashboard_1 = require("./admin/adminDashboard");

@@ -1,0 +1,397 @@
+html[data-theme="dark"] body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] .main-content,
+html[data-theme="dark"] .admin-layout,
+html[data-theme="dark"] .admin-main,
+html[data-theme="dark"] .admin-content,
+html[data-theme="dark"] .admin-settings-page,
+html[data-theme="dark"] .admin-products-page,
+html[data-theme="dark"] .admin-invoices-page,
+html[data-theme="dark"] .dashboard,
+html[data-theme="dark"] .companies,
+html[data-theme="dark"] .company-details,
+html[data-theme="dark"] .analytics,
+html[data-theme="dark"] .analytics-container,
+html[data-theme="dark"] .settings-page,
+html[data-theme="dark"] .profile-page,
+html[data-theme="dark"] .reports-container,
+html[data-theme="dark"] .products-container,
+html[data-theme="dark"] .dashboard-container,
+html[data-theme="dark"] .user-analytics,
+html[data-theme="dark"] .bills-container,
+html[data-theme="dark"] .deleted-invoices {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] :is(
+  .layout,
+  .admin-layout,
+  .drawer-card,
+  .modal-card,
+  .choice-dialog
+) :is(.page-title, .settings-title, .stat-card-value, .card-value) {
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] :is(.layout, .admin-layout, .drawer-card, .modal-card) :is(
+  .settings-subtitle,
+  .page-subtitle,
+  .dashboard-subtitle,
+  .details-subtitle,
+  .companies-subtitle,
+  .analytics-subtitle,
+  .stat-card-title,
+  .stat-card-sub,
+  .card-title,
+  .empty-sub,
+  .form-hint,
+  .profile-page-subtitle
+) {
+  color: var(--text-secondary);
+}
+
+html[data-theme="dark"] :is(
+  .dashboard-cards,
+  .stats-grid,
+  .ua-kpi-grid,
+  .reports-stats-grid,
+  .charts-grid,
+  .ua-charts,
+  .skeleton-grid
+) {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+html[data-theme="dark"] :is(.layout, .admin-layout) [class*="card"],
+html[data-theme="dark"] .drawer-card,
+html[data-theme="dark"] .modal-card,
+html[data-theme="dark"] .choice-dialog,
+html[data-theme="dark"] .dashboard-panel,
+html[data-theme="dark"] .invoice-section,
+html[data-theme="dark"] .filters-bar,
+html[data-theme="dark"] .table-wrapper,
+html[data-theme="dark"] .companies-table-container,
+html[data-theme="dark"] .invoices-table-container,
+html[data-theme="dark"] .products-table-container,
+html[data-theme="dark"] .settings-segmented-tabs,
+html[data-theme="dark"] .search-box,
+html[data-theme="dark"] .bill-search,
+html[data-theme="dark"] .ua-refresh,
+html[data-theme="dark"] .dashboard-refresh,
+html[data-theme="dark"] .back-to-dashboard-btn,
+html[data-theme="dark"] .profile-cancel-btn,
+html[data-theme="dark"] .ghost-btn,
+html[data-theme="dark"] .report-select,
+html[data-theme="dark"] .settings-toast,
+html[data-theme="dark"] .bills-toast {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+html[data-theme="dark"] :is(.layout, .admin-layout, .drawer-card, .modal-card, .choice-dialog) :is(
+  input,
+  select,
+  textarea
+) {
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+html[data-theme="dark"] :is(.layout, .admin-layout, .drawer-card, .modal-card) :is(input, textarea)::placeholder {
+  color: var(--text-muted);
+}
+
+html[data-theme="dark"] :is(.layout, .admin-layout) th,
+html[data-theme="dark"] .drawer-card th {
+  background: var(--table-header-bg);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
+}
+
+html[data-theme="dark"] :is(.layout, .admin-layout) td,
+html[data-theme="dark"] .drawer-card td {
+  color: var(--text-primary);
+  border-color: var(--border-color);
+  background: transparent;
+}
+
+html[data-theme="dark"] :is(.layout, .admin-layout) tbody tr:hover {
+  background: var(--table-row-hover);
+}
+
+html[data-theme="dark"] .sidebar {
+  background: linear-gradient(180deg, var(--bg-dark-sidebar) 0%, #0f172a 100%);
+}
+
+html[data-theme="dark"] .navbar,
+html[data-theme="dark"] .admin-navbar {
+  background: linear-gradient(180deg, var(--bg-dark-navbar) 0%, #0f172a 100%);
+}
+
+html[data-theme="dark"] .user-dropdown,
+html[data-theme="dark"] .admin-dropdown {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+html[data-theme="dark"] .modal-card p,
+html[data-theme="dark"] .drawer-card p,
+html[data-theme="dark"] .choice-dialog p {
+  color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .modal-overlay,
+html[data-theme="dark"] .drawer-overlay {
+  background: rgba(2, 6, 23, 0.72);
+}
+
+html[data-theme="dark"] .recharts-cartesian-grid line,
+html[data-theme="dark"] .recharts-cartesian-axis-line {
+  stroke: var(--chart-grid);
+}
+
+html[data-theme="dark"] .recharts-text {
+  fill: var(--chart-tick);
+}
+
+/* Printed invoice and PDF capture stay on white paper. */
+html[data-theme="dark"] .receipt-card,
+html[data-theme="dark"] .inv-sheet,
+html[data-theme="dark"] .receipt-printable-area,
+html[data-theme="dark"] .pdf-render-container,
+html[data-theme="dark"] .pdf-render-container .receipt-printable-area {
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+html[data-theme="dark"] .inv-sheet :is(h1, h2, h3, h4, p, td, th, span, strong) {
+  color: inherit;
+}
+
+html[data-theme="dark"] .theme-picker-preview,
+html[data-theme="dark"] .theme-picker-preview * {
+  color: inherit;
+}
+
+/* Hardcoded page styles load after this file. !important keeps the theme on those surfaces. */
+html[data-theme="dark"] :is(
+  .layout,
+  .main-content,
+  .admin-layout,
+  .admin-main,
+  .admin-content,
+  .admin-invoices-page,
+  .admin-products-page,
+  .admin-settings-page,
+  .companies,
+  .company-details,
+  .analytics,
+  .analytics-container,
+  .dashboard,
+  .settings-page,
+  .profile-page-wrapper,
+  .reports-container,
+  .products-container,
+  .dashboard-container,
+  .user-analytics,
+  .bills-container
+) {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] :is(
+  .bills-card,
+  .products-card,
+  .settings-card,
+  .kpi-card,
+  .chart-card,
+  .ua-chart-card,
+  .ua-table-card,
+  .ua-kpi,
+  .report-stat-card,
+  .stat-card,
+  .profile-hero-card,
+  .profile-section-card,
+  .profile-actions-bar,
+  .invoices-table-card,
+  .invoices-toolbar,
+  .invoices-table-container,
+  .products-table-container,
+  .companies-table-container,
+  .company-card,
+  .invoice-section,
+  .dashboard-panel,
+  .dashboard-summary-card,
+  .dashboard-cards .card,
+  .surface-card,
+  .admin-card,
+  .table-card,
+  .filters-bar,
+  .table-wrapper,
+  .search-box,
+  .bill-search,
+  .deleted-search,
+  .deleted-field select,
+  .deleted-reset,
+  .modal-card,
+  .modal-dialog,
+  .drawer-card,
+  .choice-dialog,
+  .user-dropdown,
+  .settings-segmented-tabs,
+  .segmented-tab-btn,
+  .refresh-btn,
+  .ua-refresh,
+  .dashboard-refresh,
+  .ghost-btn,
+  .back-to-dashboard-btn,
+  .profile-cancel-btn,
+  .report-select,
+  .filter-select,
+  .search-input-wrapper input,
+  .date-input,
+  .settings-user-hero,
+  .settings-panel-card,
+  .settings-meta-card,
+  .settings-quick-banner,
+  .info-deck-card,
+  .quick-stat,
+  .ua-kpi-hint
+) {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+html[data-theme="dark"] .ua-kpi-hint,
+html[data-theme="dark"] .quick-stat {
+  background-color: var(--bg-elevated) !important;
+  color: var(--text-secondary) !important;
+}
+
+html[data-theme="dark"] .qs-val {
+  color: var(--text-primary) !important;
+}
+
+html[data-theme="dark"] :is(.layout, .admin-layout) :is(
+  .invoices-subtitle,
+  .settings-subtitle,
+  .profile-page-subtitle,
+  .dashboard-subtitle,
+  .companies-subtitle,
+  .details-subtitle,
+  .page-subtitle,
+  .kpi-hint,
+  .deleted-field span
+) {
+  color: var(--text-secondary) !important;
+}
+
+html[data-theme="dark"] :is(.layout, .admin-layout, .drawer-card, .modal-card, .modal-dialog) :is(input, select, textarea) {
+  background-color: var(--input-bg) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+html[data-theme="dark"] :is(.bill-search input, .deleted-search input, .search-box input) {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+html[data-theme="dark"] option {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] :is(.layout, .admin-layout) th {
+  background-color: var(--table-header-bg) !important;
+  color: var(--text-secondary) !important;
+}
+
+html[data-theme="dark"] :is(.layout, .admin-layout, .drawer-card, .modal-dialog) td {
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+  background-color: transparent !important;
+}
+
+html[data-theme="dark"] :is(.layout, .admin-layout, .drawer-card, .modal-dialog) th {
+  background-color: var(--table-header-bg) !important;
+  color: var(--text-secondary) !important;
+}
+
+html[data-theme="dark"] .create-bill-btn,
+html[data-theme="dark"] .btn-primary,
+html[data-theme="dark"] .add-product-btn,
+html[data-theme="dark"] .submit-btn,
+html[data-theme="dark"] .save-invoice-btn,
+html[data-theme="dark"] .profile-submit-btn,
+html[data-theme="dark"] .choice-confirm-btn {
+  background-color: var(--primary) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+html[data-theme="dark"] .choice-confirm-btn.danger {
+  background-color: var(--danger) !important;
+}
+
+@media (max-width: 900px) {
+  .invoices-toolbar,
+  .filters-bar,
+  .products-header,
+  .reports-header,
+  .reports-header-actions,
+  .dashboard-header,
+  .ua-header,
+  .settings-header,
+  .details-header,
+  .profile-page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .invoices-toolbar select,
+  .invoices-toolbar .search-box,
+  .filter-select,
+  .search-input-wrapper {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-invoices-page,
+  .admin-products-page,
+  .admin-settings-page,
+  .companies,
+  .company-details,
+  .analytics-container {
+    padding: 16px 12px !important;
+  }
+
+  .invoices-kpi-grid,
+  .stats-grid,
+  .ua-kpi-grid,
+  .reports-stats-grid,
+  .dashboard-cards {
+    grid-template-columns: 1fr !important;
+  }
+
+  .table-responsive,
+  .invoices-table-container,
+  .products-table-container,
+  .companies-table-container,
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

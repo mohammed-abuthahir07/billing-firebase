@@ -54,6 +54,16 @@ service cloud.firestore {
         allow read: if isOwner(userId) || isAdmin();
         allow write: if isOwner(userId) || isAdmin();
       }
+
+      match /sales_records/{recordId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create, update, delete: if isOwner(userId);
+      }
+
+      match /deleted_invoices/{invoiceId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create, update, delete: if isOwner(userId);
+      }
     }
 
     // Collection Group Queries for Admin analytics
@@ -65,10 +75,17 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
-    // Platform-wide overview stats
+    match /{path=**}/sales_records/{recordId} {
+      allow read: if isAdmin();
+    }
+
+    match /{path=**}/deleted_invoices/{invoiceId} {
+      allow read: if isAdmin();
+    }
+
+    // Platform-wide overview stats. Cloud Functions use the Admin SDK and bypass these rules.
     match /platform_stats/{document=**} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow read, write: if isAdmin();
     }
 
     // Admin directory

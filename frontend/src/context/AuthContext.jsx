@@ -8,6 +8,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase/firebase';
+import { clearWelcomePending, markWelcomePending } from '../utils/welcomeSession';
 
 const AuthContext = createContext();
 
@@ -60,6 +61,7 @@ export const AuthProvider = ({ children }) => {
               await setDoc(doc(db, `users/${firebaseUser.uid}/profile/company`), {
                 companyName: newUserPayload.name,
                 alternateEmail: firebaseUser.email,
+                country: 'India',
                 updatedAt: serverTimestamp(),
               }, { merge: true });
               await setDoc(doc(db, `users/${firebaseUser.uid}/stats/dashboard`), {
@@ -182,6 +184,7 @@ export const AuthProvider = ({ children }) => {
 
       setIsLoginModalOpen(false);
       setIsRegisterModalOpen(false);
+      markWelcomePending();
       return { success: true };
     } catch (error) {
       console.error('Firebase Login error:', error);
@@ -239,6 +242,7 @@ export const AuthProvider = ({ children }) => {
           await setDoc(doc(db, `users/${firebaseUser.uid}/profile/company`), {
             companyName: trimmedName,
             alternateEmail: trimmedEmail,
+            country: 'India',
             updatedAt: serverTimestamp()
           }, { merge: true });
           await setDoc(doc(db, `users/${firebaseUser.uid}/stats/dashboard`), {
@@ -275,6 +279,7 @@ export const AuthProvider = ({ children }) => {
 
       setIsLoginModalOpen(false);
       setIsRegisterModalOpen(false);
+      markWelcomePending();
       return { success: true, user: userObj };
     } catch (error) {
       console.error('Firebase Registration error:', error);
@@ -310,6 +315,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     localStorage.removeItem('billing_user');
     localStorage.removeItem('billing_token');
+    clearWelcomePending();
     window.location.href = '/login';
   }, []);
 

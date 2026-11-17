@@ -5,22 +5,24 @@ import {
   IndianRupee,
   Receipt,
   Package,
+  Trash2,
   Settings,
   LogOut
 } from "lucide-react";
 import "./AdminSidebar.css";
 import { useAdminUI } from "../context/AdminUIContext";
+import { useAdminAuth } from "../context/AdminAuthContext";
 
 const AdminSidebar = () => {
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useAdminUI();
+  const { logout: signOutAdmin } = useAdminAuth();
 
   const handleLinkClick = () => {
     setIsMobileMenuOpen(false);
   };
 
-  const logout = () => {
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("admin_user");
+  const logout = async () => {
+    await signOutAdmin();
     window.location.href = "/admin/login";
   };
 
@@ -80,6 +82,15 @@ const AdminSidebar = () => {
 
         {/* SECTION: SYSTEM */}
         <div className="sidebar-section-header">SYSTEM</div>
+
+        <NavLink
+          to="/admin/deleted-invoices"
+          className="sidebar-link"
+          onClick={handleLinkClick}
+        >
+          <Trash2 size={19} />
+          <span>Deleted Invoices</span>
+        </NavLink>
 
         <NavLink
           to="/admin/settings"

@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Loader2,
   ShieldCheck,
+  Palette,
   Mail,
   Copy,
   Check,
@@ -28,19 +29,24 @@ import {
   getUserSettingsProfile,
   updateUserSettingsDisplayName,
   changeUserPassword,
+  sendUserPasswordReset,
   getUserAppInformation,
 } from "../../services/settingsService";
 import { getAvatarUrl } from "../../services/profileService";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
+import ThemePicker from "../../components/ThemePicker/ThemePicker";
 import "./Settings.css";
 
 const Settings = () => {
   const { user, updateUser } = useAuth();
+  const { preference, setTheme } = useTheme();
 
   const [activeTab, setActiveTab] = useState("profile");
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
 
   // Profile fields
   const [email, setEmail] = useState("");
@@ -264,6 +270,15 @@ const Settings = () => {
             <span>Security</span>
           </button>
           <button
+            className={`segmented-tab-btn ${activeTab === "appearance" ? "active" : ""}`}
+            onClick={() => setActiveTab("appearance")}
+            role="tab"
+            aria-selected={activeTab === "appearance"}
+          >
+            <Palette size={16} />
+            <span>Appearance</span>
+          </button>
+          <button
             className={`segmented-tab-btn ${activeTab === "info" ? "active" : ""}`}
             onClick={() => setActiveTab("info")}
             role="tab"
@@ -426,6 +441,16 @@ const Settings = () => {
       {/* =========================================================
           TAB 2: SECURITY
           ========================================================= */}
+      {activeTab === "appearance" && (
+        <div className="settings-card">
+          <div className="card-section-head">
+            <h2>Appearance</h2>
+            <p>Choose how the business portal looks on this browser. This does not change the admin portal or the invoice PDF.</p>
+          </div>
+          <ThemePicker value={preference} onChange={setTheme} label="Business portal theme" />
+        </div>
+      )}
+
       {activeTab === "security" && (
         <div className="settings-grid-layout" role="tabpanel">
           {/* Main Password Change Form */}
@@ -557,6 +582,27 @@ const Settings = () => {
                 </button>
               </div>
             </form>
+            <div className="form-action-row">
+              <button
+                type="button"
+                className="settings-submit-btn"
+                disabled={sendingReset}
+                onClick={async () => {
+                  try {
+                    setSendingReset(true);
+                    const result = await sendUserPasswordReset();
+                    showToast("success", result.message);
+                  } catch (err) {
+                    showToast("error", err.message || "Failed to send the reset email.");
+                  } finally {
+                    setSendingReset(false);
+                  }
+                }}
+              >
+                <Mail size={16} />
+                <span>{sendingReset ? "Sending reset email..." : "Email me a password reset link"}</span>
+              </button>
+            </div>
           </div>
 
           {/* Right Column: Security Guidance */}

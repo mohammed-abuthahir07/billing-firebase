@@ -5,6 +5,7 @@ import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 import AdminProtectedRoute from "./admin/routes/AdminProtectedRoute";
 import AdminLayout from "./admin/layouts/AdminLayout";
 import PublicRoute from "./components/PublicRoute/PublicRoute";
+import ThemeRoot from "./components/ThemeRoot/ThemeRoot";
 
 const AuthModal = lazy(() => import("./components/AuthModal/AuthModal"));
 const Dashboard = lazy(() => import("./pages/Dashboard/Dashboard"));
@@ -24,6 +25,8 @@ const Analytics = lazy(() => import("./admin/pages/Analytics/Analytics"));
 const AdminInvoices = lazy(() => import("./admin/pages/Invoices/AdminInvoices"));
 const AdminProducts = lazy(() => import("./admin/pages/Products/AdminProducts"));
 const AdminSettings = lazy(() => import("./admin/pages/Settings/AdminSettings"));
+const AdminDeletedInvoices = lazy(() => import("./admin/pages/DeletedInvoices/AdminDeletedInvoices"));
+const DeletedInvoices = lazy(() => import("./pages/DeletedInvoices/DeletedInvoices"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword/ForgotPassword"));
 const VerifyOTP = lazy(() => import("./pages/ForgotPassword/VerifyOTP"));
 const ResetPassword = lazy(() => import("./pages/ForgotPassword/ResetPassword"));
@@ -43,6 +46,7 @@ function App() {
   return (
     <>
       <BrowserRouter>
+        <ThemeRoot />
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             {/* Protected routes — require login */}
@@ -55,6 +59,7 @@ function App() {
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/deleted-invoices" element={<DeletedInvoices />} />
               </Route>
             </Route>
 
@@ -74,6 +79,7 @@ function App() {
               <Route path="companies/:id" element={<CompanyDetails />} />
               <Route path="invoices" element={<AdminInvoices />} />
               <Route path="products" element={<AdminProducts />} />
+              <Route path="deleted-invoices" element={<AdminDeletedInvoices />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
 

@@ -27,6 +27,7 @@ import {
   getRevenueAnalytics,
   getUsersAnalytics,
 } from "../../services/adminAnalyticsService";
+import { useChartColors } from "../../../theme/useChartColors";
 import "./Analytics.css";
 
 const toNumber = (value) => {
@@ -63,6 +64,7 @@ const Analytics = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [salesNotice, setSalesNotice] = useState("");
 
   const fetchAnalytics = useCallback(async () => {
     setLoading(true);
@@ -76,9 +78,14 @@ const Analytics = () => {
       ]);
 
       setUsers(Array.isArray(usersData) ? usersData : []);
-      setRevenue(Array.isArray(revenueData) ? revenueData : []);
-      setInvoices(Array.isArray(invoiceData) ? invoiceData : []);
+      setRevenue(Array.isArray(revenueData?.points) ? revenueData.points : []);
+      setInvoices(Array.isArray(invoiceData?.points) ? invoiceData.points : []);
       setProducts(Array.isArray(productData) ? productData : []);
+      setSalesNotice(
+        revenueData?.salesRecordsBlocked || invoiceData?.salesRecordsBlocked
+          ? "Sales records could not be read for one or more companies. These charts use active invoices only, so completely deleted invoices may be missing."
+          : ""
+      );
     } catch (err) {
       console.log("Analytics Error:", err);
       setError("Failed to load analytics. Please try again.");
@@ -129,9 +136,10 @@ const Analytics = () => {
     ];
   }, [users, revenue, invoices, products]);
 
+  const chartColors = useChartColors();
   const chartAxis = {
-    tick: { fill: "#64748b", fontSize: 12 },
-    axisLine: { stroke: "#e2e8f0" },
+    tick: { fill: chartColors.tick, fontSize: 12 },
+    axisLine: { stroke: chartColors.grid },
     tickLine: false,
   };
 
@@ -160,6 +168,7 @@ const Analytics = () => {
       </header>
 
       {error && <div className="analytics-error">{error}</div>}
+      {salesNotice && <p className="analytics-subtitle">{salesNotice}</p>}
 
       <section className="stats-grid">
         {kpis.map((card, index) => {
@@ -210,7 +219,7 @@ const Analytics = () => {
                     <stop offset="95%" stopColor="#2563eb" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
                 <XAxis dataKey="month" {...chartAxis} />
                 <YAxis allowDecimals={false} {...chartAxis} />
                 <Tooltip content={<ChartTooltip prefix="Users: " />} />
@@ -244,7 +253,7 @@ const Analytics = () => {
                     <stop offset="100%" stopColor="#059669" />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
                 <XAxis dataKey="month" {...chartAxis} />
                 <YAxis {...chartAxis} />
                 <Tooltip content={<ChartTooltip isMoney />} />
@@ -274,7 +283,7 @@ const Analytics = () => {
                     <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.04} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
                 <XAxis dataKey="month" {...chartAxis} />
                 <YAxis allowDecimals={false} {...chartAxis} />
                 <Tooltip content={<ChartTooltip prefix="Invoices: " />} />
@@ -301,7 +310,7 @@ const Analytics = () => {
             </div>
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={products}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
                 <XAxis dataKey="month" {...chartAxis} />
                 <YAxis allowDecimals={false} {...chartAxis} />
                 <Tooltip content={<ChartTooltip prefix="Products: " />} />

@@ -7,6 +7,7 @@ import {
   Receipt,
   BarChart3,
   TrendingUp,
+  Trash2,
   LogOut,
   User,
   Settings,
@@ -85,6 +86,17 @@ const Sidebar = () => {
           <li className="sidebar-item">
             <User size={20} className="sidebar-icon" />
             <span>Profile</span>
+          </li>
+        </NavLink>
+
+        <NavLink
+          to="/deleted-invoices"
+          className="nav-link"
+          onClick={handleLinkClick}
+        >
+          <li className="sidebar-item">
+            <Trash2 size={20} className="sidebar-icon" />
+            <span>Deleted Invoices</span>
           </li>
         </NavLink>
 

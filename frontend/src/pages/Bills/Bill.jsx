@@ -20,16 +20,21 @@ import {
   CheckCircle,
   Clock,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Search,
+  Share2,
 } from 'lucide-react';
 import { getProducts } from '../../services/productService';
-import { createBill, getBills } from '../../services/billService';
+import { completelyDeleteInvoice, createBill, deleteInvoiceAsWrongEntry, getBills } from '../../services/billService';
 import { getProfile } from '../../services/profileService';
 import { getVariantLabel, formatPackLabel } from '../../utils/productVariant';
+import { shareOrDownloadFile } from '../../utils/pdfShare';
 import { SERVER_ORIGIN } from '../../services/api';
 import './Bills.css';
 
 const PAGE_SIZE = 10;
+
+const errorText = (err, fallback) => err?.message || err?.response?.data?.message || err?.response?.data?.error || fallback;
 
 const resolveLogoSrc = (path) => {
   if (!path) return '';
@@ -128,6 +133,12 @@ const Bill = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [deleteStep, setDeleteStep] = useState('choose');
+  const [deleting, setDeleting] = useState(false);
+  const [customerPhone, setCustomerPhone] = useState('');
 
   // Available products (from API) for the bill drawer — loaded on demand
   const [availableProducts, setAvailableProducts] = useState([]);
@@ -185,33 +196,34 @@ const Bill = () => {
   }, []);
 
   // ── Fetch existing bills ───────────────────────────────────────────────────
-  const fetchBills = useCallback(async (nextPage = 1) => {
+  const fetchBills = useCallback(async (nextPage = 1, term = '') => {
     setBillsLoading(true);
     setBillsError('');
     try {
-      const data = await getBills({ page: nextPage, limit: PAGE_SIZE });
+      const data = await getBills({ page: nextPage, limit: PAGE_SIZE, search: term });
       const list = Array.isArray(data) ? data : (data.bills || data.invoices || []);
       setInvoices(list);
       setPage(data.currentPage || nextPage);
       setTotalPages(data.totalPages || 0);
       setTotalRecords(data.totalRecords ?? data.totalBills ?? list.length);
     } catch (err) {
-      if (err.response?.status === 404) {
-        setInvoices([]);
-        setTotalPages(0);
-        setTotalRecords(0);
-      } else {
-        const msg = err.response?.data?.message || err.response?.data?.error || 'Failed to load bills.';
-        setBillsError(msg);
-      }
+      setInvoices([]);
+      setTotalPages(0);
+      setTotalRecords(0);
+      setBillsError(errorText(err, 'Failed to load bills.'));
     } finally {
       setBillsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchBills(page);
-  }, [fetchBills, page]);
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    fetchBills(page, debouncedSearch);
+  }, [fetchBills, page, debouncedSearch]);
 
   useEffect(() => {
     let cancelled = false;
@@ -223,6 +235,7 @@ const Bill = () => {
         if (isBusinessLogo(src) || isBusinessLogo(imagePath)) {
           setBusinessLogo(src);
         }
+        if (data.profile?.gst_number) setSellerGST(data.profile.gst_number);
       })
       .catch(() => {});
     return () => {
@@ -279,6 +292,7 @@ const Bill = () => {
   const handleOpenCreateDrawer = async () => {
     setCustomerName('');
     setCustomerEmail('');
+    setCustomerPhone('');
     setCustomerGST('');
     setCustomerAddress('');
     setStockError('');
@@ -346,11 +360,48 @@ const Bill = () => {
     const targetInvoice = inv || selectedInvoice;
     if (!targetInvoice) return;
     try {
-      generateInvoicePDF(targetInvoice);
+      generateInvoicePDF({ ...targetInvoice, profileImage: targetInvoice.profileImage || businessLogo });
       showToast("Invoice PDF downloaded successfully!");
     } catch (err) {
       console.error("PDF download failed:", err);
-      showToast("Failed to generate PDF.", "error");
+      showToast(errorText(err, "Failed to generate PDF."), "error");
+    }
+  };
+
+  const handleSharePDF = async (inv) => {
+    const targetInvoice = inv || selectedInvoice;
+    if (!targetInvoice) return;
+    try {
+      const file = generateInvoicePDF(
+        { ...targetInvoice, profileImage: targetInvoice.profileImage || businessLogo },
+        { delivery: 'file' }
+      );
+      const result = await shareOrDownloadFile(file, `Tax Invoice ${targetInvoice.invoice_number || ''}`);
+      showToast(result === 'shared' ? 'Invoice shared.' : 'Sharing is unavailable here, so the PDF was downloaded.');
+    } catch (err) {
+      if (err?.name === 'AbortError') return;
+      showToast(errorText(err, 'Could not share the invoice PDF.'), 'error');
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDelete || deleting) return;
+    setDeleting(true);
+    try {
+      if (deleteStep === 'wrong') {
+        const result = await deleteInvoiceAsWrongEntry(pendingDelete.id);
+        showToast(`Invoice ${result.invoiceNumber} deleted and business changes reversed.`);
+      } else if (deleteStep === 'complete') {
+        const result = await completelyDeleteInvoice(pendingDelete.id);
+        showToast(`Invoice ${result.invoiceNumber} permanently deleted.`);
+      }
+      setPendingDelete(null);
+      setDeleteStep('choose');
+      await fetchBills(page, debouncedSearch);
+    } catch (err) {
+      showToast(errorText(err, 'Could not delete this invoice.'), 'error');
+    } finally {
+      setDeleting(false);
     }
   };
   // ── Submit bill payload ─────────────────────────────────────────────────────
@@ -372,12 +423,9 @@ const Bill = () => {
     const trimmedCustomerGST = customerGST.trim();
 
     const payload = {
-      sellerName: user?.name,
-      sellerEmail: user?.email,
-      sellerGST: trimmedSellerGST,
-
       customerName: customerName.trim(),
-      customerEmail: customerEmail.trim() || 'customer@example.com',
+      customerPhone: customerPhone.trim(),
+      customerEmail: customerEmail.trim(),
       customerGST: trimmedCustomerGST,
       customerAddress: customerAddress.trim(),
 
@@ -400,26 +448,19 @@ const Bill = () => {
         customer_gst: rawInvoice.customer_gst || rawInvoice.customerGST || trimmedCustomerGST,
       };
 
-      setSelectedInvoice(newInvoice);
+      setSelectedInvoice({ ...newInvoice, profileImage: businessLogo });
       setIsPreviewOpen(true);
-
-      // Wait for preview DOM to paint before PDF capture
-      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-
-      await handleDownloadPDF(newInvoice);
-
-      setIsPreviewOpen(false);
       showToast("Bill created successfully!");
       setIsDrawerOpen(false);
 
       await Promise.all([
-        page === 1 ? fetchBills(1) : Promise.resolve(),
+        fetchBills(1, debouncedSearch),
         fetchProducts()
       ]);
       if (page !== 1) setPage(1);
 
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.error || 'Failed to create bill.';
+      const msg = errorText(err, 'Failed to create bill.');
       const lowerMsg = msg.toLowerCase();
       if (
         lowerMsg.includes('stock') ||
@@ -514,6 +555,19 @@ const Bill = () => {
 
       {/* Bills List */}
       <section className="bills-card animate-slide-up delay-1">
+        <div className="bill-search">
+          <Search size={16} />
+          <input
+            id="bill-search"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
+            placeholder="Search by invoice number or customer"
+            aria-label="Search invoices"
+          />
+        </div>
         {billsLoading && (
           <div className="bills-loading">
             <Loader2 size={32} className="spin-icon" />
@@ -525,7 +579,7 @@ const Bill = () => {
           <div className="bills-error">
             <AlertTriangle size={28} />
             <p>{billsError}</p>
-            <button className="retry-btn" onClick={() => fetchBills(page)}>
+            <button className="retry-btn" onClick={() => fetchBills(page, debouncedSearch)}>
               <RefreshCw size={14} /> Retry
             </button>
           </div>
@@ -576,6 +630,33 @@ const Bill = () => {
                           title="Preview Invoice"
                         >
                           <Eye size={15} />
+                        </button>
+                        <button
+                          className="preview-action"
+                          type="button"
+                          onClick={() => handleDownloadPDF(inv)}
+                          title="Download PDF"
+                        >
+                          <Download size={15} />
+                        </button>
+                        <button
+                          className="preview-action"
+                          type="button"
+                          onClick={() => handleSharePDF(inv)}
+                          title="Share PDF"
+                        >
+                          <Share2 size={15} />
+                        </button>
+                        <button
+                          className="preview-action"
+                          type="button"
+                          onClick={() => {
+                            setPendingDelete(inv);
+                            setDeleteStep('choose');
+                          }}
+                          title="Delete invoice"
+                        >
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -662,8 +743,8 @@ const Bill = () => {
                     <input
                       id="seller-gst"
                       value={sellerGST}
-                      onChange={(e) => setSellerGST(e.target.value)}
-                      placeholder="e.g. 22AAAAA0000A1Z5"
+                      readOnly
+                      placeholder="Taken from the company profile"
                     />
                   </div>
 
@@ -680,6 +761,17 @@ const Bill = () => {
                         required
                       />
                     </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="client-phone">Client Phone</label>
+                    <input
+                      id="client-phone"
+                      type="tel"
+                      placeholder="Optional phone number"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                    />
                   </div>
 
                   <div className="form-group">
@@ -884,6 +976,54 @@ const Bill = () => {
         document.body
       )}
 
+      {pendingDelete && createPortal(
+        <div className="modal-overlay" onClick={() => !deleting && setPendingDelete(null)}>
+          <div
+            className="choice-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-invoice-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="choice-dialog-head">
+              <h2 id="delete-invoice-title">Delete invoice</h2>
+              <p>{pendingDelete.invoice_number || pendingDelete.invoiceNumber}</p>
+            </header>
+            {deleteStep === 'choose' && (
+              <div className="choice-options">
+                <button type="button" className="choice-option" onClick={() => setDeleteStep('wrong')}>
+                  <strong>Wrong Entry</strong>
+                  <span>Restores stock, reverses the dashboard counters, and removes the sale. This does not send a bank or UPI refund.</span>
+                </button>
+                <button type="button" className="choice-option danger" onClick={() => setDeleteStep('complete')}>
+                  <strong>Completely Delete</strong>
+                  <span>Archives the invoice and removes it from this list. Stock and dashboard totals stay unchanged, and the sale remains in reports.</span>
+                </button>
+              </div>
+            )}
+            {deleteStep === 'wrong' && (
+              <p className="choice-confirm">This restores stock, reduces dashboard counters, and deletes the invoice and its sales record. It does not send a bank or UPI refund.</p>
+            )}
+            {deleteStep === 'complete' && (
+              <p className="choice-confirm">This archives the invoice and removes it from the active list. Stock and dashboard counters stay unchanged, and the sale remains in reports.</p>
+            )}
+            <footer className="choice-dialog-actions">
+              {deleteStep === 'choose' ? (
+                <button type="button" className="choice-cancel" onClick={() => setPendingDelete(null)}>Cancel</button>
+              ) : (
+                <>
+                  <button type="button" className="choice-cancel" disabled={deleting} onClick={() => setDeleteStep('choose')}>Back</button>
+                  <button type="button" className={`choice-confirm-btn ${deleteStep === 'complete' ? 'danger' : ''}`} disabled={deleting} onClick={confirmDelete}>
+                    {deleting ? 'Working...' : deleteStep === 'wrong' ? 'Confirm reversal' : 'Confirm delete'}
+                  </button>
+                </>
+              )}
+            </footer>
+          </div>
+        </div>,
+        document.body
+      )}
+
       {/* Invoice Preview Modal */}
       {isPreviewOpen && selectedInvoice && createPortal(
         <div className="modal-overlay" onClick={() => setIsPreviewOpen(false)}>
@@ -894,6 +1034,9 @@ const Bill = () => {
               </button>
               <button className="print-btn" onClick={() => handleDownloadPDF(selectedInvoice)} style={{ marginLeft: '8px' }}>
                 <Download size={16} /> Download PDF
+              </button>
+              <button className="print-btn" type="button" onClick={() => handleSharePDF(selectedInvoice)} style={{ marginLeft: '8px' }}>
+                <Share2 size={16} /> Share PDF
               </button>
               <button className="close-btn" onClick={() => setIsPreviewOpen(false)}>
                 <X size={20} />

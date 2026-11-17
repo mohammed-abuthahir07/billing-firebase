@@ -1,5 +1,14 @@
-import { collection, doc, getDoc, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebase';
+import { loadMergedRecords } from '../utils/salesHistory';
+import {
+  customerLabel,
+  recordGrandTotal,
+  recordGst,
+  recordMonth,
+  recordSubtotal,
+  recordYear,
+} from '../utils/salesMerge';
 import {
   generateMonthlyReportPDF,
   generateYearlyReportPDF,
@@ -20,14 +29,12 @@ export const getAvailableReportYears = async () => {
   if (!user) return [currentYear];
 
   try {
-    const invoicesRef = collection(db, `users/${user.uid}/invoices`);
-    const snap = await getDocs(invoicesRef);
+    const { records } = await loadMergedRecords(user.uid);
     const yearsSet = new Set();
     yearsSet.add(currentYear);
 
-    snap.forEach((d) => {
-      const data = d.data();
-      const yr = Number(data.year) || (data.created_at ? new Date(data.created_at).getFullYear() : null);
+    records.forEach((data) => {
+      const yr = recordYear(data);
       if (yr && !Number.isNaN(yr)) {
         yearsSet.add(yr);
       }
@@ -90,20 +97,17 @@ export const getMonthlySummary = async (params = {}) => {
     };
   }
 
-  const invoicesRef = collection(db, `users/${user.uid}/invoices`);
-  const q = query(invoicesRef, where('year', '==', year), where('month', '==', month));
-  const snap = await getDocs(q);
+  const { records, salesRecordsBlocked } = await loadMergedRecords(user.uid, { year, month });
 
   let totalRevenue = 0;
   let totalSubtotal = 0;
   let totalGst = 0;
   const productSalesMap = new Map();
 
-  snap.forEach((docSnap) => {
-    const data = docSnap.data();
-    totalRevenue += Number(data.grand_total) || 0;
-    totalSubtotal += Number(data.subtotal) || 0;
-    totalGst += Number(data.gst_amount) || 0;
+  records.forEach((data) => {
+    totalRevenue += recordGrandTotal(data);
+    totalSubtotal += recordSubtotal(data);
+    totalGst += recordGst(data);
 
     if (Array.isArray(data.items)) {
       data.items.forEach((item) => {
@@ -132,7 +136,7 @@ export const getMonthlySummary = async (params = {}) => {
     }
   }
 
-  const totalInvoices = snap.size;
+  const totalInvoices = records.length;
   const averageInvoiceValue = totalInvoices > 0 ? totalRevenue / totalInvoices : 0;
 
   return {
@@ -149,8 +153,21 @@ export const getMonthlySummary = async (params = {}) => {
       totalSubtotal: Number(totalSubtotal.toFixed(2)),
       bestSellingProduct,
     },
+    salesRecordsBlocked,
   };
 };
+
+const monthInvoiceCache = new Map();
+
+export function clearMonthlyInvoiceCache(userId) {
+  if (!userId) {
+    monthInvoiceCache.clear();
+    return;
+  }
+  for (const key of monthInvoiceCache.keys()) {
+    if (key.startsWith(`${userId}|`)) monthInvoiceCache.delete(key);
+  }
+}
 
 export const getMonthlyInvoices = async (params = {}) => {
   const user = auth.currentUser;
@@ -173,21 +190,22 @@ export const getMonthlyInvoices = async (params = {}) => {
     };
   }
 
-  const invoicesRef = collection(db, `users/${user.uid}/invoices`);
-  const q = query(invoicesRef, where('year', '==', year), where('month', '==', month));
-  const snap = await getDocs(q);
+  const cacheKey = `${user.uid}|${year}|${month}`;
+  let cached = monthInvoiceCache.get(cacheKey);
+  if (!cached) {
+    cached = await loadMergedRecords(user.uid, { year, month });
+    monthInvoiceCache.set(cacheKey, cached);
+  }
+  const { records, salesRecordsBlocked } = cached;
 
-  let filteredInvoices = snap.docs.map((d) => {
-    const data = d.data();
-    return {
-      id: d.id,
-      invoiceNumber: data.invoice_number,
-      customerName: data.customer_name,
-      invoiceDate: data.created_at,
-      itemsCount: Array.isArray(data.items) ? data.items.length : 1,
-      totalAmount: Number(data.grand_total) || 0,
-    };
-  });
+  let filteredInvoices = records.map((data) => ({
+    id: data.id,
+    invoiceNumber: data.invoice_number || data.invoiceNumber,
+    customerName: customerLabel(data, 'Customer'),
+    invoiceDate: data.created_at,
+    itemsCount: Array.isArray(data.items) ? data.items.length : 1,
+    totalAmount: recordGrandTotal(data),
+  }));
 
   if (search) {
     filteredInvoices = filteredInvoices.filter(
@@ -214,6 +232,7 @@ export const getMonthlyInvoices = async (params = {}) => {
       total,
       totalPages,
     },
+    salesRecordsBlocked,
   };
 };
 
@@ -228,13 +247,10 @@ export const getMonthlyProducts = async (params = {}) => {
     return { success: true, month, year, reportMonth, products: [] };
   }
 
-  const invoicesRef = collection(db, `users/${user.uid}/invoices`);
-  const q = query(invoicesRef, where('year', '==', year), where('month', '==', month));
-  const snap = await getDocs(q);
+  const { records } = await loadMergedRecords(user.uid, { year, month });
 
   const productMap = new Map();
-  snap.forEach((d) => {
-    const data = d.data();
+  records.forEach((data) => {
     if (Array.isArray(data.items)) {
       data.items.forEach((item) => {
         const name = item.product_name || item.productName || 'Product';
@@ -273,25 +289,17 @@ export const downloadMonthlyReportPdf = async (params = {}) => {
   if (user) {
     company = await fetchCompanyProfile(user);
 
-    try {
-      const invoicesRef = collection(db, `users/${user.uid}/invoices`);
-      const q = query(
-        invoicesRef,
-        where('year', '==', summaryRes.year),
-        where('month', '==', summaryRes.month)
-      );
-      const snap = await getDocs(q);
-      invoices = snap.docs.map((d) => {
-        const data = d.data();
-        return {
-          invoiceNumber: data.invoice_number,
-          customerName: data.customer_name,
-          invoiceDate: data.created_at,
-          itemsCount: Array.isArray(data.items) ? data.items.length : 1,
-          totalAmount: Number(data.grand_total) || 0,
-        };
-      });
-    } catch (_) {}
+    const { records } = await loadMergedRecords(user.uid, {
+      year: summaryRes.year,
+      month: summaryRes.month,
+    });
+    invoices = records.map((data) => ({
+      invoiceNumber: data.invoice_number || data.invoiceNumber,
+      customerName: customerLabel(data, 'Customer'),
+      invoiceDate: data.created_at,
+      itemsCount: Array.isArray(data.items) ? data.items.length : 1,
+      totalAmount: recordGrandTotal(data),
+    }));
   }
 
   return generateMonthlyReportPDF({
@@ -301,31 +309,29 @@ export const downloadMonthlyReportPdf = async (params = {}) => {
     company,
     reportMonth: summaryRes.reportMonth,
     fileName,
+    delivery: params.delivery || 'save',
   });
 };
 
 // ─── YEARLY REPORT DOWNLOAD ──────────────────────────────────────────────────
 
-export const downloadYearlyReportPdf = async (selectedYear) => {
+export const downloadYearlyReportPdf = async (selectedYear, options = {}) => {
   const user = auth.currentUser;
   if (!user) throw new Error('User not authenticated.');
 
   const targetYear = Number(selectedYear) || new Date().getFullYear();
   const company = await fetchCompanyProfile(user);
 
-  const invoicesRef = collection(db, `users/${user.uid}/invoices`);
-  const snap = await getDocs(invoicesRef);
+  const { records } = await loadMergedRecords(user.uid, { year: targetYear });
 
-  // Filter invoices for selected year
   const yearlyInvoices = [];
-  snap.forEach((d) => {
-    const data = d.data();
+  records.forEach((data) => {
     const yr = Number(data.year) || (data.created_at ? new Date(data.created_at).getFullYear() : null);
     if (yr === targetYear) {
       yearlyInvoices.push({
-        id: d.id,
-        invoiceNumber: data.invoice_number || `INV-${d.id.substring(0, 8)}`,
-        customerName: data.customer_name || 'Walk-in Customer',
+        id: data.id,
+        invoiceNumber: data.invoice_number || data.invoiceNumber || `INV-${String(data.id).substring(0, 8)}`,
+        customerName: customerLabel(data),
         invoiceDate: data.created_at || new Date().toISOString(),
         itemsCount: Array.isArray(data.items) ? data.items.length : 1,
         subtotal: Number(data.subtotal) || 0,
@@ -420,38 +426,34 @@ export const downloadYearlyReportPdf = async (selectedYear) => {
     customers,
     invoices: yearlyInvoices,
     fileName,
+    delivery: options.delivery || 'save',
   });
 };
 
 // ─── TOTAL / LIFETIME REPORT DOWNLOAD ────────────────────────────────────────
 
-export const downloadTotalReportPdf = async () => {
+export const downloadTotalReportPdf = async (options = {}) => {
   const user = auth.currentUser;
   if (!user) throw new Error('User not authenticated.');
 
   const company = await fetchCompanyProfile(user);
 
   // 1. Fetch All Historical Invoices
-  const invoicesRef = collection(db, `users/${user.uid}/invoices`);
-  const invoiceSnap = await getDocs(invoicesRef);
+  const { records } = await loadMergedRecords(user.uid);
 
-  const allInvoices = [];
-  invoiceSnap.forEach((d) => {
-    const data = d.data();
-    allInvoices.push({
-      id: d.id,
-      invoiceNumber: data.invoice_number || `INV-${d.id.substring(0, 8)}`,
-      customerName: data.customer_name || 'Walk-in Customer',
-      invoiceDate: data.created_at || new Date().toISOString(),
-      itemsCount: Array.isArray(data.items) ? data.items.length : 1,
-      subtotal: Number(data.subtotal) || 0,
-      gst_amount: Number(data.gst_amount) || 0,
-      totalAmount: Number(data.grand_total) || 0,
-      items: data.items || [],
-      year: Number(data.year) || (data.created_at ? new Date(data.created_at).getFullYear() : new Date().getFullYear()),
-      month: Number(data.month) || (data.created_at ? new Date(data.created_at).getMonth() + 1 : 1),
-    });
-  });
+  const allInvoices = records.map((data) => ({
+    id: data.id,
+    invoiceNumber: data.invoice_number || data.invoiceNumber || `INV-${String(data.id).substring(0, 8)}`,
+    customerName: customerLabel(data),
+    invoiceDate: data.created_at || new Date().toISOString(),
+    itemsCount: Array.isArray(data.items) ? data.items.length : 1,
+    subtotal: recordSubtotal(data),
+    gst_amount: recordGst(data),
+    totalAmount: recordGrandTotal(data),
+    items: data.items || [],
+    year: recordYear(data) || new Date().getFullYear(),
+    month: recordMonth(data) || 1,
+  }));
 
   allInvoices.sort((a, b) => new Date(b.invoiceDate) - new Date(a.invoiceDate));
 
@@ -580,5 +582,6 @@ export const downloadTotalReportPdf = async () => {
     period: periodStr,
     accountCreatedAt: accountCreatedStr,
     fileName,
+    delivery: options.delivery || 'save',
   });
 };

@@ -52,7 +52,7 @@
 .sidebar-section-header {
     font-size: 10px;
     font-weight: 800;
-    color: #64748b;
+    color: var(--text-secondary);
     letter-spacing: 0.1em;
     padding: 14px 14px 4px;
     text-transform: uppercase;

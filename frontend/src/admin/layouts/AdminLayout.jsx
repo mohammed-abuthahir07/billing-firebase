@@ -5,10 +5,10 @@ import { useAdminUI } from "../context/AdminUIContext";
 import "./AdminLayout.css";
 
 const AdminLayout = () => {
-    const { adminTheme } = useAdminUI();
+    const { resolvedAdminTheme } = useAdminUI();
 
     return (
-        <div className={`admin-layout ${adminTheme === "dark" ? "admin-dark-theme" : ""}`}>
+        <div className={`admin-layout ${resolvedAdminTheme === "dark" ? "admin-dark-theme" : ""}`}>
             <AdminSidebar />
             <div className="admin-main">
                 <AdminNavbar />

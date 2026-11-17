@@ -9,6 +9,8 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebase';
+import { notifyOutOfStock, clearOutOfStockNotice } from './stockAlertService';
+import { formatVariantLabel } from '../utils/productVariant';
 
 /**
  * Fetch all products for the currently logged-in user.
@@ -120,9 +122,27 @@ export const updateProduct = async (id, productData) => {
   if (productData.packageWeight !== undefined) updatePayload.packageWeight = Number(productData.packageWeight) || 0;
   if (productData.weightUnit !== undefined) updatePayload.weightUnit = productData.weightUnit.trim();
   if (productData.sellingPrice !== undefined) updatePayload.sellingPrice = Number(productData.sellingPrice) || 0;
-  if (productData.quantity !== undefined) updatePayload.quantity = Math.floor(Number(productData.quantity) || 0);
+  let nextQuantity = null;
+  if (productData.quantity !== undefined) {
+    nextQuantity = Math.floor(Number(productData.quantity) || 0);
+    updatePayload.quantity = nextQuantity;
+    if (nextQuantity > 0) updatePayload.outOfStockNotified = false;
+  }
 
+  const beforeSnap = nextQuantity === 0 ? await getDoc(prodRef) : null;
   await updateDoc(prodRef, updatePayload);
+  if (beforeSnap?.exists()) {
+    const before = beforeSnap.data();
+    const previous = typeof before.quantity === 'number' ? before.quantity : 0;
+    if (previous > 0) {
+      notifyOutOfStock({
+        productId: id,
+        productName: formatVariantLabel(before.itemName, before.packageWeight, before.weightUnit),
+      }).catch(() => {});
+    }
+  } else if (nextQuantity > 0) {
+    clearOutOfStockNotice(id).catch(() => {});
+  }
 
   return {
     success: true,

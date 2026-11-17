@@ -1,5 +1,43 @@
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { collection, doc, getCountFromServer, getDoc, getDocs, limit, orderBy, query } from "firebase/firestore";
 import { db } from "../../firebase/firebase";
+import { loadMergedRecords } from "../../utils/salesHistory";
+import { money, recordGrandTotal, recordMonth, recordYear } from "../../utils/salesMerge";
+
+async function financialsFor(userId) {
+  const now = new Date();
+  const currYear = now.getFullYear();
+  const currMonth = now.getMonth() + 1;
+  let totalRevenue = 0;
+  let monthlyRevenue = 0;
+  let yearlyRevenue = 0;
+  let salesRecordsBlocked = false;
+
+  try {
+    const statsSnap = await getDoc(doc(db, `users/${userId}/stats/dashboard`));
+    if (statsSnap.exists()) {
+      const stats = statsSnap.data();
+      totalRevenue = money(stats.totalRevenue);
+      monthlyRevenue = money(stats.monthlySales);
+      yearlyRevenue = money(stats.yearlySales);
+      if (totalRevenue > 0) {
+        return { totalRevenue, monthlyRevenue, yearlyRevenue, salesRecordsBlocked };
+      }
+    }
+  } catch (_) {}
+
+  const merged = await loadMergedRecords(userId);
+  salesRecordsBlocked = merged.salesRecordsBlocked;
+  merged.records.forEach((record) => {
+    const value = recordGrandTotal(record);
+    totalRevenue += value;
+    if (recordYear(record) === currYear) {
+      yearlyRevenue += value;
+      if (recordMonth(record) === currMonth) monthlyRevenue += value;
+    }
+  });
+
+  return { totalRevenue, monthlyRevenue, yearlyRevenue, salesRecordsBlocked };
+}
 
 // ======================================
 // GET ALL COMPANIES
@@ -22,32 +60,17 @@ export const getCompanies = async () => {
 
                 let totalProducts = 0;
                 try {
-                    const pSnap = await getDocs(collection(db, `users/${uId}/products`));
-                    totalProducts = pSnap.size;
+                    const pCount = await getCountFromServer(collection(db, `users/${uId}/products`));
+                    totalProducts = pCount.data().count;
                 } catch (pErr) {}
 
                 let totalInvoices = 0;
-                let totalRevenue = 0;
-                let monthlyRevenue = 0;
-                let yearlyRevenue = 0;
-                const now = new Date();
-                const currYear = now.getFullYear();
-                const currMonth = now.getMonth() + 1;
+                const finance = await financialsFor(uId);
+                let salesRecordsBlocked = finance.salesRecordsBlocked;
 
                 try {
-                    const invSnap = await getDocs(collection(db, `users/${uId}/invoices`));
-                    totalInvoices = invSnap.size;
-                    invSnap.forEach((inv) => {
-                        const d = inv.data();
-                        const val = Number(d.grand_total) || 0;
-                        totalRevenue += val;
-                        if (d.year === currYear) {
-                            yearlyRevenue += val;
-                            if (d.month === currMonth) {
-                                monthlyRevenue += val;
-                            }
-                        }
-                    });
+                    const invCount = await getCountFromServer(collection(db, `users/${uId}/invoices`));
+                    totalInvoices = invCount.data().count;
                 } catch (iErr) {}
 
                 return {
@@ -57,9 +80,10 @@ export const getCompanies = async () => {
                     created_at: uData.createdAt || new Date().toISOString(),
                     totalProducts,
                     totalInvoices,
-                    monthlyRevenue: monthlyRevenue.toFixed(2),
-                    yearlyRevenue: yearlyRevenue.toFixed(2),
-                    totalRevenue: totalRevenue.toFixed(2),
+                    monthlyRevenue: finance.monthlyRevenue.toFixed(2),
+                    yearlyRevenue: finance.yearlyRevenue.toFixed(2),
+                    totalRevenue: finance.totalRevenue.toFixed(2),
+                    salesRecordsBlocked,
                 };
             })
         );
@@ -96,42 +120,43 @@ export const getCompany = async (id) => {
 
         let totalProducts = 0;
         try {
-            const pSnap = await getDocs(collection(db, `users/${id}/products`));
-            totalProducts = pSnap.size;
+            const pCount = await getCountFromServer(collection(db, `users/${id}/products`));
+            totalProducts = pCount.data().count;
         } catch (pErr) {}
 
+        const finance = await financialsFor(id);
         let totalInvoices = 0;
-        let totalRevenue = 0;
-        let monthlyRevenue = 0;
-        const now = new Date();
-        const currYear = now.getFullYear();
-        const currMonth = now.getMonth() + 1;
         const recentInvoices = [];
 
         try {
-            const invSnap = await getDocs(collection(db, `users/${id}/invoices`));
-            totalInvoices = invSnap.size;
-            const sortedDocs = invSnap.docs.sort((a, b) => {
-                const da = new Date(a.data().created_at || 0);
-                const db = new Date(b.data().created_at || 0);
-                return db - da;
-            });
+            const invCount = await getCountFromServer(collection(db, `users/${id}/invoices`));
+            totalInvoices = invCount.data().count;
+            const invSnap = await getDocs(query(
+                collection(db, `users/${id}/invoices`),
+                orderBy('created_at', 'desc'),
+                limit(5)
+            ));
 
-            sortedDocs.forEach((inv, idx) => {
-                const d = inv.data();
-                const val = Number(d.grand_total) || 0;
-                totalRevenue += val;
-                if (d.year === currYear && d.month === currMonth) {
-                    monthlyRevenue += val;
-                }
-                if (idx < 10) {
-                    recentInvoices.push({
-                        invoice_number: d.invoice_number || `INV-${inv.id}`,
-                        customer_name: d.customer_name || "Customer",
-                        grand_total: String(val.toFixed(2)),
-                        created_at: d.created_at || new Date().toISOString(),
-                    });
-                }
+            invSnap.docs.forEach((inv) => {
+                const data = inv.data();
+                recentInvoices.push({
+                    id: inv.id,
+                    invoice_number: data.invoice_number || data.invoiceNumber || `INV-${inv.id}`,
+                    customer_name: data.customer_name || data.customerName || "Customer",
+                    customer_email: data.customer_email || data.customerEmail || "",
+                    customer_phone: data.customer_phone || data.customerPhone || "",
+                    customer_gst: data.customer_gst || "",
+                    customer_address: data.customer_address || data.customerAddress || "",
+                    seller_name: data.seller_name || companyName,
+                    seller_email: data.seller_email || "",
+                    seller_gst: data.seller_gst || "",
+                    subtotal: data.subtotal || "0.00",
+                    gst_amount: data.gst_amount || "0.00",
+                    grand_total: String(Number(data.grand_total || 0).toFixed(2)),
+                    created_at: data.created_at || new Date().toISOString(),
+                    status: data.status || "Paid",
+                    items: Array.isArray(data.items) ? data.items : [],
+                });
             });
         } catch (iErr) {}
 
@@ -143,11 +168,12 @@ export const getCompany = async (id) => {
                 email: uData.email,
                 created_at: uData.createdAt,
                 totalInvoices,
-                totalRevenue: totalRevenue.toFixed(2),
+                totalRevenue: finance.totalRevenue.toFixed(2),
                 totalProducts,
-                monthlyRevenue: monthlyRevenue.toFixed(2),
+                monthlyRevenue: finance.monthlyRevenue.toFixed(2),
             },
             recentInvoices,
+            salesRecordsBlocked: finance.salesRecordsBlocked,
         };
     } catch (err) {
         console.error("[AdminCompanyDetails] Fetch error:", err);

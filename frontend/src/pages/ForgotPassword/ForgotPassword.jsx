@@ -28,19 +28,8 @@ const ForgotPassword = () => {
             const data = await sendOTP(email);
 
             setSuccess(data.message);
-
-            timeoutRef.current = setTimeout(() => {
-                navigate("/verify-otp", {
-                    state: {
-                        email,
-                    },
-                });
-            }, 1500);
         } catch (err) {
-            setError(
-                err.response?.data?.message ||
-                "Failed to send OTP."
-            );
+            setError(err.message || "Failed to send the reset email.");
         } finally {
             setLoading(false);
         }
@@ -57,8 +46,7 @@ const ForgotPassword = () => {
                 <h1>Forgot Password</h1>
 
                 <p>
-                    Enter your registered email address.
-                    We'll send you a One-Time Password (OTP).
+                    Enter your registered email address. Firebase will email you a link to choose a new password.
                 </p>
 
                 {error && (

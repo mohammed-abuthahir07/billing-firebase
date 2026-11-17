@@ -1,0 +1,116 @@
+.admin-deleted-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.admin-deleted-page .invoices-header {
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.admin-deleted-page .invoices-subtitle {
+  max-width: 640px;
+  line-height: 1.45;
+}
+
+.admin-deleted-page .invoices-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(140px, 0.7fr));
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.admin-deleted-page .search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-muted);
+  color: var(--text-muted);
+}
+
+.admin-deleted-page .search-box input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.admin-deleted-page .search-box input::placeholder {
+  color: var(--text-muted);
+}
+
+.admin-deleted-page .invoices-toolbar select {
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-muted);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-deleted-page .invoices-table-card {
+  min-height: 280px;
+}
+
+.admin-deleted-page .empty-state {
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 48px 20px;
+  text-align: center;
+}
+
+.admin-deleted-page .empty-state h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+}
+
+.admin-deleted-page .empty-state p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+@media (max-width: 1024px) {
+  .admin-deleted-page .invoices-toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-deleted-page .search-box {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-deleted-page .invoices-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-deleted-page .invoices-header {
+    flex-direction: column;
+  }
+}

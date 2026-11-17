@@ -1,5 +1,13 @@
 import jsPDF from "jspdf";
 
+const finishPdf = (doc, fileName, delivery) => {
+  if (delivery === "file") {
+    return new File([doc.output("blob")], fileName, { type: "application/pdf" });
+  }
+  doc.save(fileName);
+  return { success: true, fileName };
+};
+
 const formatMoney = (val) => {
   const num = Number(val) || 0;
   return `Rs. ${num.toLocaleString("en-IN", {
@@ -98,6 +106,7 @@ export const generateMonthlyReportPDF = ({
   company = {},
   reportMonth = "Current Month",
   fileName = "Monthly-Sales-Report.pdf",
+  delivery = "save",
 }) => {
   const doc = new jsPDF({
     orientation: "portrait",
@@ -444,8 +453,7 @@ export const generateMonthlyReportPDF = ({
   }
 
   drawFooter();
-  doc.save(fileName);
-  return { success: true, fileName };
+  return finishPdf(doc, fileName, delivery);
 };
 
 /**
@@ -460,6 +468,7 @@ export const generateYearlyReportPDF = ({
   customers = [],
   invoices = [],
   fileName = `Yearly-Sales-Report-${year}.pdf`,
+  delivery = "save",
 }) => {
   const doc = new jsPDF({
     orientation: "portrait",
@@ -1007,8 +1016,7 @@ export const generateYearlyReportPDF = ({
   }
 
   drawFooter();
-  doc.save(fileName);
-  return { success: true, fileName };
+  return finishPdf(doc, fileName, delivery);
 };
 
 /**
@@ -1026,6 +1034,7 @@ export const generateTotalReportPDF = ({
   period = "All Time",
   accountCreatedAt = "Active",
   fileName = "Complete-Business-Report.pdf",
+  delivery = "save",
 }) => {
   const doc = new jsPDF({
     orientation: "portrait",
@@ -1615,6 +1624,5 @@ export const generateTotalReportPDF = ({
   }
 
   drawFooter();
-  doc.save(fileName);
-  return { success: true, fileName };
+  return finishPdf(doc, fileName, delivery);
 };

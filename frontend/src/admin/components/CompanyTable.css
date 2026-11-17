@@ -6,7 +6,7 @@
     overflow-x: auto;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    background: #ffffff;
+    background: var(--bg-card);
 }
 
 .company-table {
@@ -25,11 +25,11 @@
 
 .company-table td {
     padding: 14px 18px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--border-color);
     font-size: 14px;
-    color: #334155;
+    color: var(--text-secondary);
 }
 
 .company-table tr:hover {
-    background-color: #f8fafc;
+    background-color: var(--bg-muted);
 }

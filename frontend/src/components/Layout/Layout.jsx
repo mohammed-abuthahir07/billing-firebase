@@ -1,5 +1,6 @@
 import Navbar from "../Navbar/Navbar";
 import Sidebar from "../Sidebar/Sidebar";
+import WelcomeModal from "../WelcomeModal/WelcomeModal";
 import { Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import "./Layout.css";
@@ -24,6 +25,7 @@ const Layout = () => {
           <Outlet />
         </main>
       </div>
+      <WelcomeModal />
     </>
   );
 };

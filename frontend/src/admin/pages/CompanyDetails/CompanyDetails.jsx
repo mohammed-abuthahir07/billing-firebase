@@ -23,6 +23,8 @@ const CompanyDetails = () => {
     const [loading, setLoading] = useState(true);
     const [company, setCompany] = useState(null);
     const [recentInvoices, setRecentInvoices] = useState([]);
+    const [selectedInvoice, setSelectedInvoice] = useState(null);
+    const [salesNotice, setSalesNotice] = useState("");
 
     const loadCompany = async () => {
         try {
@@ -30,6 +32,11 @@ const CompanyDetails = () => {
             const data = await getCompany(id);
             setCompany(data.company);
             setRecentInvoices(data.recentInvoices || []);
+            setSalesNotice(
+                data.salesRecordsBlocked
+                    ? "Sales records could not be read. Revenue uses active invoices only, so completely deleted invoices may be missing."
+                    : ""
+            );
         } catch (error) {
             console.log(error);
         } finally {
@@ -72,6 +79,7 @@ const CompanyDetails = () => {
                     </button>
                 </div>
             </header>
+            {salesNotice && <p className="details-subtitle">{salesNotice}</p>}
 
             {loading || !company ? (
                 <>
@@ -126,10 +134,14 @@ const CompanyDetails = () => {
                     <section className="invoice-section">
                         <div className="invoice-head">
                             <div>
-                                <h2>Recent Invoices</h2>
-                                <p>Latest bills created by this user</p>
+                                <h2>Invoices</h2>
+                                <p>Latest 5 bills only. Select a bill to see its line items. This view does not change the company's records.</p>
                             </div>
-                            <span className="invoice-count">{recentInvoices.length} records</span>
+                            <span className="invoice-count">
+                                {Number(company?.totalInvoices) > recentInvoices.length
+                                    ? `Latest ${recentInvoices.length} of ${company.totalInvoices}`
+                                    : `${recentInvoices.length} records`}
+                            </span>
                         </div>
                         <table>
                             <thead>
@@ -143,7 +155,11 @@ const CompanyDetails = () => {
                             <tbody>
                                 {recentInvoices.length > 0 ? (
                                     recentInvoices.map((invoice, index) => (
-                                        <tr key={invoice.invoice_number} style={{ animationDelay: `${index * 50}ms` }}>
+                                        <tr
+                                            key={invoice.id || invoice.invoice_number}
+                                            style={{ animationDelay: `${index * 50}ms`, cursor: "pointer" }}
+                                            onClick={() => setSelectedInvoice(invoice)}
+                                        >
                                             <td className="invoice-id">{invoice.invoice_number}</td>
                                             <td>{invoice.customer_name}</td>
                                             <td>{formatMoney(invoice.grand_total)}</td>
@@ -166,6 +182,41 @@ const CompanyDetails = () => {
                             </tbody>
                         </table>
                     </section>
+                    {selectedInvoice && (
+                        <section className="invoice-section" role="dialog" aria-label="Invoice lines">
+                            <div className="invoice-head">
+                                <div>
+                                    <h2>{selectedInvoice.invoice_number}</h2>
+                                    <p>{selectedInvoice.customer_name} · {formatMoney(selectedInvoice.grand_total)}</p>
+                                </div>
+                                <button type="button" className="back-btn" onClick={() => setSelectedInvoice(null)}>Close</button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Qty</th>
+                                        <th>Price</th>
+                                        <th>GST</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {(selectedInvoice.items || []).length > 0 ? selectedInvoice.items.map((item, index) => (
+                                        <tr key={`${item.productId || item.product_id || index}`}>
+                                            <td>{item.product_name || item.productName || "Item"}</td>
+                                            <td>{item.quantity}</td>
+                                            <td>{item.sellingPrice || item.price}</td>
+                                            <td>{item.gst}%</td>
+                                            <td>{item.total}</td>
+                                        </tr>
+                                    )) : (
+                                        <tr><td colSpan="5" className="empty-row">No line items stored on this invoice.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </section>
+                    )}
                 </>
             )}
         </div>

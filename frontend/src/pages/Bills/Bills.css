@@ -32,6 +32,134 @@
   box-shadow: var(--shadow-glow);
 }
 
+.bill-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 12px 4px;
+  padding: 0 12px;
+  min-height: 44px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--input-bg);
+  color: var(--text-muted);
+}
+
+.bill-search input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.bill-search input::placeholder {
+  color: var(--text-muted);
+}
+
+.choice-dialog {
+  width: min(520px, 100%);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: var(--shadow-xl);
+}
+
+.choice-dialog-head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.choice-dialog-head p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.choice-options {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.choice-option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+
+.choice-option strong {
+  font-size: 14px;
+}
+
+.choice-option span,
+.choice-confirm {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.choice-option:hover {
+  border-color: var(--primary);
+}
+
+.choice-option.danger:hover {
+  border-color: var(--danger);
+}
+
+.choice-confirm {
+  margin: 16px 0 0;
+}
+
+.choice-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.choice-cancel,
+.choice-confirm-btn {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13.5px;
+}
+
+.choice-cancel {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.choice-confirm-btn {
+  background: var(--primary);
+  color: white;
+  border: 0;
+}
+
+.choice-confirm-btn.danger {
+  background: var(--danger);
+}
+
+.choice-confirm-btn:disabled,
+.choice-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Bills Card & Table */
 .bills-card {
   background: var(--bg-secondary);
@@ -128,40 +256,6 @@
    Includes design tokens + every class used by the drawer form,
    line items, totals, receipt modal, and page header/table states.
    ============================================================ */
-
-/* ---------- Design tokens -------------------------------------- */
-:root {
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
-  --bg-dark-sidebar: #0f172a;
-
-  --text-primary: #0f172a;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-
-  --border-color: #e2e8f0;
-  --border-light: #f1f5f9;
-
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-light: #eff6ff;
-
-  --danger: #dc2626;
-  --danger-light: #fef2f2;
-
-  --warning: #b45309;
-  --warning-light: #fffbeb;
-
-  --shadow-xl: 0 25px 60px -12px rgba(15, 23, 42, 0.35);
-  --shadow-glow: 0 0 0 4px rgba(37, 99, 235, 0.18);
-
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-}
 
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }

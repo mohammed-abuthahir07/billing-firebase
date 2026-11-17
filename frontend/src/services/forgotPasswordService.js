@@ -9,48 +9,36 @@ export const sendOTP = async (email) => {
         throw new Error("Email is required");
     }
     try {
-        await sendPasswordResetEmail(auth, email);
+        await sendPasswordResetEmail(auth, email.trim());
         return {
             success: true,
-            message: "Password reset link sent to your email address.",
+            message: "Password reset email sent. Open the link in that email to choose a new password.",
         };
     } catch (error) {
         if (error.code === 'auth/user-not-found') {
             throw new Error("Email not found");
         }
+        if (error.code === 'auth/invalid-email') {
+            throw new Error("Enter a valid email address.");
+        }
         throw new Error(error.message || "Failed to send reset email");
     }
 };
 
-// ===============================
-// Verify OTP / Code
-// ===============================
-export const verifyOTP = async (email, otp) => {
-    // With Firebase Auth, reset links contain an oobCode action code
-    return {
-        success: true,
-        message: "OTP verified successfully",
-    };
+export const verifyOTP = async () => {
+    throw new Error("Password reset is completed from the link in the Firebase email. This screen does not verify a code.");
 };
 
-// ===============================
-// Reset Password
-// ===============================
 export const resetPassword = async (email, otp, newPassword) => {
-    if (!email || !newPassword) {
-        throw new Error("Email and new password are required");
+    if (!newPassword) {
+        throw new Error("A new password is required.");
     }
-
-    try {
-        if (otp && otp.length > 10) {
-            // If passed an oobCode from action link
-            await confirmPasswordReset(auth, otp, newPassword);
-        }
-        return {
-            success: true,
-            message: "Password changed successfully",
-        };
-    } catch (error) {
-        throw new Error(error.message || "Failed to reset password");
+    if (!otp || otp.length <= 10) {
+        throw new Error("Use the reset link in your email. A 6-digit code cannot change the password.");
     }
+    await confirmPasswordReset(auth, otp, newPassword);
+    return {
+        success: true,
+        message: "Password changed successfully",
+    };
 };

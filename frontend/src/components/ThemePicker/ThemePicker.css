@@ -1,0 +1,130 @@
+.theme-picker {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.theme-picker-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.theme-picker-card:hover {
+  border-color: #93c5fd;
+  transform: translateY(-2px);
+}
+
+.theme-picker-card.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+}
+
+.theme-picker-preview {
+  height: 78px;
+  border-radius: 10px;
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.theme-picker-side {
+  width: 28%;
+}
+
+.theme-picker-main {
+  flex: 1;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.theme-picker-bar {
+  height: 8px;
+  width: 62%;
+  border-radius: 99px;
+  background: rgba(37, 99, 235, 0.7);
+}
+
+.theme-picker-block {
+  height: 22px;
+  border-radius: 6px;
+}
+
+.theme-picker-preview.light {
+  background: #f8fafc;
+}
+
+.theme-picker-preview.light .theme-picker-side {
+  background: #0f172a;
+}
+
+.theme-picker-preview.light .theme-picker-block {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+.theme-picker-preview.dark {
+  background: #0f172a;
+}
+
+.theme-picker-preview.dark .theme-picker-side {
+  background: #020617;
+}
+
+.theme-picker-preview.dark .theme-picker-block {
+  background: #1e293b;
+}
+
+.theme-picker-preview.system {
+  background: linear-gradient(90deg, #f8fafc 50%, #0f172a 50%);
+}
+
+.theme-picker-preview.system .theme-picker-side {
+  background: #0f172a;
+}
+
+.theme-picker-preview.system .theme-picker-block {
+  background: linear-gradient(90deg, #ffffff 50%, #1e293b 50%);
+}
+
+.theme-picker-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.theme-picker-text {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.theme-picker-badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-light);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+@media (max-width: 900px) {
+  .theme-picker {
+    grid-template-columns: 1fr;
+  }
+}

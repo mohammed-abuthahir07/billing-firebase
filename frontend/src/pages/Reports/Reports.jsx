@@ -26,6 +26,7 @@ import {
   getMonthlySummary,
   getAvailableReportYears,
 } from '../../services/reportService';
+import { shareOrDownloadFile } from '../../utils/pdfShare';
 import './Reports.css';
 
 const PAGE_SIZE = 10;
@@ -97,6 +98,7 @@ const Reports = () => {
   const [loading, setLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(false);
   const [error, setError] = useState('');
+  const [salesNotice, setSalesNotice] = useState('');
 
   // Download states (separate flags for clear visual indicators)
   const [downloadingMonthly, setDownloadingMonthly] = useState(false);
@@ -146,6 +148,11 @@ const Reports = () => {
     const data = await getMonthlySummary({ month, year });
     setSummary(data.summary || null);
     setReportMonthLabel(data.reportMonth || '');
+    setSalesNotice(
+      data.salesRecordsBlocked
+        ? 'Sales records could not be read. This report uses active invoices only, so completely deleted invoices may be missing.'
+        : ''
+    );
   }, []);
 
   // Fetch monthly invoices
@@ -187,10 +194,7 @@ const Reports = () => {
         ]);
         hasLoadedRef.current = true;
       } catch (err) {
-        const msg =
-          err.response?.data?.message ||
-          err.response?.data?.error ||
-          'Failed to load monthly reports.';
+        const msg = err?.message || 'Failed to load monthly reports.';
         setError(msg);
       } finally {
         setLoading(false);
@@ -215,6 +219,26 @@ const Reports = () => {
     const totalPages = pagination.totalPages || 1;
     if (nextPage < 1 || nextPage > totalPages || nextPage === page) return;
     setPage(nextPage);
+  };
+
+  const shareReport = async (kind) => {
+    if (isDownloadingAny) return;
+    const setBusy = kind === 'monthly' ? setDownloadingMonthly : kind === 'yearly' ? setDownloadingYearly : setDownloadingTotal;
+    setBusy(true);
+    try {
+      const file = kind === 'monthly'
+        ? await downloadMonthlyReportPdf({ month: selectedMonth, year: selectedMonthYear, delivery: 'file' })
+        : kind === 'yearly'
+          ? await downloadYearlyReportPdf(selectedYear, { delivery: 'file' })
+          : await downloadTotalReportPdf({ delivery: 'file' });
+      if (!(file instanceof File)) throw new Error('Could not prepare the PDF.');
+      const result = await shareOrDownloadFile(file, kind === 'monthly' ? 'Monthly sales report' : kind === 'yearly' ? 'Yearly sales report' : 'Lifetime sales report');
+      showToast(result === 'shared' ? 'Report shared.' : 'This browser cannot share files, so the PDF was downloaded.');
+    } catch (err) {
+      if (err?.name !== 'AbortError') showToast(err.message || 'Could not share the report.', 'error');
+    } finally {
+      setBusy(false);
+    }
   };
 
   // 1. Download Monthly Report PDF
@@ -444,6 +468,15 @@ const Reports = () => {
             )}
             <span>{downloadingTotal ? 'Generating Total…' : 'Download Total Report PDF'}</span>
           </button>
+          <button className="download-report-btn monthly-btn" type="button" disabled={isDownloadingAny} onClick={() => shareReport('monthly')}>
+            <span>Share Monthly PDF</span>
+          </button>
+          <button className="download-report-btn yearly-btn" type="button" disabled={isDownloadingAny} onClick={() => shareReport('yearly')}>
+            <span>Share Yearly PDF</span>
+          </button>
+          <button className="download-report-btn total-btn" type="button" disabled={isDownloadingAny} onClick={() => shareReport('total')}>
+            <span>Share Lifetime PDF</span>
+          </button>
         </div>
       </header>
 
@@ -456,6 +489,8 @@ const Reports = () => {
       )}
 
       {/* Error state */}
+      {salesNotice && <p className="reports-subtitle">{salesNotice}</p>}
+
       {!loading && error && (
         <div className="reports-error">
           <AlertCircle size={32} />
