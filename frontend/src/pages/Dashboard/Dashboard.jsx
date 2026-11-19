@@ -13,9 +13,12 @@ import {
   AlertTriangle,
   Clock,
   RefreshCw,
-  Package
+  Package,
+  Building2,
 } from 'lucide-react';
 import { getDashboard } from '../../services/dashboardService';
+import { subscribeCompanyProfile } from '../../services/profileService';
+import { isBusinessProfileComplete } from '../../utils/profileCompletion';
 import { notifyOutOfStock } from '../../services/stockAlertService';
 import { getUserAnalytics } from '../../services/userAnalyticsService';
 import { formatPackLabel } from '../../utils/productVariant';
@@ -70,6 +73,7 @@ const Dashboard = () => {
   const [daySales, setDaySales] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [profileReminder, setProfileReminder] = useState({ status: 'loading', complete: false });
 
   // ── Fetch dashboard stats ──────────────────────────────────────────────────
   const fetchDashboard = useCallback(async () => {
@@ -96,6 +100,33 @@ const Dashboard = () => {
   useEffect(() => {
     fetchDashboard();
   }, [fetchDashboard]);
+
+  useEffect(() => {
+    const uid = user?.uid || user?.id;
+    if (!uid) return undefined;
+
+    let active = true;
+    setProfileReminder({ status: 'loading', complete: false });
+    const unsubscribe = subscribeCompanyProfile(
+      uid,
+      (profile) => {
+        if (!active) return;
+        setProfileReminder({
+          status: 'ready',
+          complete: isBusinessProfileComplete(profile),
+        });
+      },
+      () => {
+        if (!active) return;
+        setProfileReminder({ status: 'error', complete: false });
+      }
+    );
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [user?.uid, user?.id]);
 
   useEffect(() => {
     (dashData?.lowStockProducts || []).forEach((product) => {
@@ -238,6 +269,27 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
+      {profileReminder.status === 'ready' && !profileReminder.complete && (
+        <section className="profile-reminder" role="status">
+          <div className="profile-reminder-icon" aria-hidden="true">
+            <Building2 size={20} />
+          </div>
+          <div className="profile-reminder-copy">
+            <h2>Complete Your Business Profile</h2>
+            <p>
+              Please complete your business profile to access all business features and generate professional invoices with your company information.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="profile-reminder-btn"
+            onClick={() => navigate('/profile')}
+          >
+            Complete Profile
+          </button>
+        </section>
+      )}
+
       {/* Top Banner */}
       <header className="dashboard-header animate-slide-up">
         <div className="header-info">

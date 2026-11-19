@@ -427,7 +427,7 @@ const Settings = () => {
               <div className="quick-banner-content">
                 <h4>Company &amp; Billing Details</h4>
                 <p>
-                  Looking to update GSTIN, company address, phone number or invoice logo?
+                  Invoices use the company name and business email saved in your business profile. Your login email is not printed unless you save it there.
                 </p>
                 <Link to="/profile" className="banner-link">
                   Open Business Profile →

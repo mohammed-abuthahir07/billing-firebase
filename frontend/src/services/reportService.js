@@ -13,7 +13,14 @@ import {
   generateMonthlyReportPDF,
   generateYearlyReportPDF,
   generateTotalReportPDF,
+  generateCustomRangeReportPDF,
 } from '../utils/reportPdfGenerator';
+import {
+  buildCustomRangeReport,
+  formatRangeLabel,
+  validateDateRange,
+} from '../utils/reportDateRange';
+import { sellerFromCompany } from '../utils/companySeller';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -59,12 +66,20 @@ const fetchCompanyProfile = async (user) => {
     if (profileDoc.exists()) company = profileDoc.data();
 
     const userDoc = await getDoc(doc(db, `users/${user.uid}`));
-    if (userDoc.exists()) {
-      const uData = userDoc.data();
-      company.name = company.companyName || uData.name || user.displayName || 'Business User';
-      company.email = company.alternateEmail || uData.email || user.email || '';
-      company.createdAt = uData.createdAt || user.metadata?.creationTime || '';
-    }
+    const uData = userDoc.exists() ? userDoc.data() : {};
+    const seller = sellerFromCompany(company, {
+      personalName: uData.name || user.displayName || '',
+      authEmail: user.email || '',
+    });
+    company.name = seller.companyName;
+    company.companyName = seller.companyName;
+    company.email = seller.email;
+    company.alternateEmail = seller.email;
+    company.mobile = seller.phone;
+    company.gstNumber = seller.gstin;
+    company.addressLine = seller.address;
+    company.profileImage = seller.logo || company.profileImage || '';
+    company.createdAt = uData.createdAt || user.metadata?.creationTime || '';
   } catch (_) {}
 
   return company;
@@ -583,5 +598,47 @@ export const downloadTotalReportPdf = async (options = {}) => {
     accountCreatedAt: accountCreatedStr,
     fileName,
     delivery: options.delivery || 'save',
+  });
+};
+
+function customRangeFileSlug(value) {
+  return formatRangeLabel(value).replace(/\s+/g, '-') || 'date';
+}
+
+/**
+ * Custom date range report. Uses the same merged sales/invoice records as the
+ * monthly, yearly, and lifetime reports, then keeps invoices whose stored
+ * calendar date falls on From Date through To Date inclusive.
+ */
+export const downloadCustomRangeReportPdf = async ({ fromDate, toDate, delivery = 'save' } = {}) => {
+  const validationError = validateDateRange(fromDate, toDate);
+  if (validationError) throw new Error(validationError);
+
+  const user = auth.currentUser;
+  if (!user) throw new Error('User not authenticated.');
+
+  const fromLabel = formatRangeLabel(fromDate);
+  const toLabel = formatRangeLabel(toDate);
+  const company = await fetchCompanyProfile(user);
+  const { records, salesRecordsBlocked } = await loadMergedRecords(user.uid);
+  const report = buildCustomRangeReport(records, { fromDate, toDate });
+
+  if (report.summary.totalInvoices === 0) {
+    throw new Error(`No invoices were found from ${fromLabel} to ${toLabel}. Choose a different date range.`);
+  }
+
+  const fileName = `Custom-Date-Range-Report-${customRangeFileSlug(fromDate)}-to-${customRangeFileSlug(toDate)}.pdf`;
+
+  return generateCustomRangeReportPDF({
+    company,
+    fromLabel,
+    toLabel,
+    generatedLabel: formatRangeLabel(new Date()),
+    summary: report.summary,
+    products: report.products,
+    invoices: report.invoices,
+    salesRecordsBlocked,
+    fileName,
+    delivery,
   });
 };

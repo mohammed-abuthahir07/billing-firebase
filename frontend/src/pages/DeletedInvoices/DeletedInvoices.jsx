@@ -4,6 +4,7 @@ import { getDeletedInvoices } from '../../services/deletedInvoiceService';
 import { generateInvoicePDF } from '../../utils/invoicePdfGenerator';
 import { shareOrDownloadFile } from '../../utils/pdfShare';
 import { getProfile } from '../../services/profileService';
+import { applySellerToInvoice, sellerFromCompany } from '../../utils/companySeller';
 import '../Bills/Bills.css';
 import './DeletedInvoices.css';
 
@@ -35,6 +36,7 @@ const DeletedInvoices = () => {
   const [year, setYear] = useState(0);
   const [selected, setSelected] = useState(null);
   const [logo, setLogo] = useState('');
+  const [companySeller, setCompanySeller] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -53,7 +55,29 @@ const DeletedInvoices = () => {
   useEffect(() => {
     load();
     getProfile()
-      .then((data) => setLogo(data.profile?.profile_image || ''))
+      .then((data) => {
+        const seller = sellerFromCompany(
+          {
+            companyName: data.profile?.company_name,
+            alternateEmail: data.profile?.alternate_email,
+            mobile: data.profile?.mobile,
+            gstNumber: data.profile?.gst_number,
+            address: data.profile?.address,
+            city: data.profile?.city,
+            state: data.profile?.state,
+            country: data.profile?.country,
+            pincode: data.profile?.pincode,
+            profileImage: data.profile?.profile_image,
+            businessConfigured: data.profile?.business_configured === true,
+          },
+          {
+            personalName: data.user?.name || '',
+            authEmail: data.user?.email || '',
+          }
+        );
+        setCompanySeller(seller);
+        setLogo(seller.logo || '');
+      })
       .catch(() => {});
   }, []);
 
@@ -70,7 +94,10 @@ const DeletedInvoices = () => {
     });
   }, [invoices, search, month, year]);
 
-  const withLogo = (invoice) => ({ ...invoice, profileImage: logo });
+  const withLogo = (invoice) => applySellerToInvoice(
+    { ...invoice, profileImage: logo },
+    companySeller || { companyName: '', email: '', phone: '', gstin: '', address: '', logo }
+  );
 
   const download = (invoice) => {
     try {

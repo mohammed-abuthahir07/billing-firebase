@@ -1,8 +1,13 @@
-import jsPDF from "jspdf";
+import jsPDFImport from "jspdf";
+
+const jsPDF = jsPDFImport?.jsPDF || jsPDFImport;
 
 const finishPdf = (doc, fileName, delivery) => {
   if (delivery === "file") {
     return new File([doc.output("blob")], fileName, { type: "application/pdf" });
+  }
+  if (delivery === "buffer") {
+    return doc.output("arraybuffer");
   }
   doc.save(fileName);
   return { success: true, fileName };
@@ -57,19 +62,20 @@ const drawCompanyCard = (doc, { company, startY, margin, contentWidth, pageWidth
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10.5);
   doc.setTextColor(15, 23, 42);
-  const compName = company.name || company.companyName || "Business Owner";
-  const truncatedComp = compName.length > 34 ? `${compName.substring(0, 32)}...` : compName;
-  doc.text(truncatedComp, textLeft, startY + 10.5);
+  const compName = company.name || company.companyName || "";
+  if (compName) {
+    const truncatedComp = compName.length > 34 ? `${compName.substring(0, 32)}...` : compName;
+    doc.text(truncatedComp, textLeft, startY + 10.5);
+  }
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(100, 116, 139);
-  const emailText = company.email || company.alternateEmail || "";
-  const phoneText = company.mobile ? ` • Tel: ${company.mobile}` : "";
-  doc.text(`${emailText}${phoneText}`, textLeft, startY + 15.5);
+  const contactParts = [company.email || company.alternateEmail || "", company.mobile ? `Tel: ${company.mobile}` : ""].filter(Boolean);
+  if (contactParts.length) doc.text(contactParts.join(" • "), textLeft, startY + 15.5);
 
-  const locText = [company.city, company.state, company.country].filter(Boolean).join(", ");
-  doc.text(locText ? `Address: ${locText}` : "Registered Business Profile", textLeft, startY + 20);
+  const locText = company.addressLine || [company.address, company.city, company.state, company.pincode].filter(Boolean).join(", ");
+  if (locText) doc.text(`Address: ${locText}`, textLeft, startY + 20);
 
   // Business Meta (Right)
   const rightColX = pageWidth / 2 + 10;
@@ -83,8 +89,7 @@ const drawCompanyCard = (doc, { company, startY, margin, contentWidth, pageWidth
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(100, 116, 139);
-  const gstText = company.gstNumber ? `GSTIN: ${company.gstNumber}` : "GSTIN: Unregistered";
-  doc.text(gstText, rightColX, startY + 10.5);
+  if (company.gstNumber) doc.text(`GSTIN: ${company.gstNumber}`, rightColX, startY + 10.5);
 
   if (extraLabel && extraVal) {
     doc.text(`${extraLabel}: ${extraVal}`, rightColX, startY + 15.5);
@@ -1621,6 +1626,337 @@ export const generateTotalReportPDF = ({
 
       curY += rowH;
     });
+  }
+
+  drawFooter();
+  return finishPdf(doc, fileName, delivery);
+};
+
+/**
+ * Custom date range financial report.
+ * Reuses the shared company card, money formatting, and PDF finish path.
+ * Monthly, yearly, and lifetime generators above are unchanged.
+ */
+export const generateCustomRangeReportPDF = ({
+  company = {},
+  fromLabel = "",
+  toLabel = "",
+  generatedLabel = "",
+  summary = {},
+  products = [],
+  invoices = [],
+  salesRecordsBlocked = false,
+  fileName = "Custom-Date-Range-Report.pdf",
+  delivery = "save",
+}) => {
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
+
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 14;
+  const contentWidth = pageWidth - margin * 2;
+  let currentPage = 1;
+  const title = "Custom Date Range Financial Report";
+
+  const drawFooter = () => {
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.4);
+    doc.line(margin, pageHeight - 12, pageWidth - margin, pageHeight - 12);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text("Billing SaaS • Custom Date Range Financial Report • Computer Generated", margin, pageHeight - 7);
+    doc.text(`Page ${currentPage}`, pageWidth - margin, pageHeight - 7, { align: "right" });
+  };
+
+  const drawHeaderBanner = (isSubsequentPage = false) => {
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, pageWidth, isSubsequentPage ? 20 : 32, "F");
+    doc.setFillColor(37, 99, 235);
+    doc.rect(0, isSubsequentPage ? 19 : 30.8, pageWidth, 1.2, "F");
+
+    doc.setFillColor(37, 99, 235);
+    doc.roundedRect(margin, isSubsequentPage ? 4 : 6, 8, 8, 1.8, 1.8, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.text("BS", margin + 4, isSubsequentPage ? 9.5 : 11.5, { align: "center" });
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(isSubsequentPage ? 11 : 13);
+    doc.setTextColor(255, 255, 255);
+    doc.text(
+      isSubsequentPage ? "CUSTOM DATE RANGE REPORT (Contd.)" : title,
+      margin + 12,
+      isSubsequentPage ? 9.5 : 12
+    );
+
+    if (!isSubsequentPage) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(203, 213, 225);
+      doc.text(`From ${fromLabel || "-"}  to  ${toLabel || "-"}`, margin + 12, 18);
+
+      const pillWidth = 42;
+      const pillHeight = 14;
+      const pillX = pageWidth - margin - pillWidth;
+      const pillY = 8;
+      doc.setFillColor(30, 41, 59);
+      doc.roundedRect(pillX, pillY, pillWidth, pillHeight, 2, 2, "F");
+      doc.setDrawColor(51, 65, 85);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(pillX, pillY, pillWidth, pillHeight, 2, 2, "D");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(6.5);
+      doc.setTextColor(148, 163, 184);
+      doc.text("GENERATED", pillX + pillWidth / 2, pillY + 5, { align: "center" });
+      doc.setTextColor(96, 165, 250);
+      doc.setFontSize(7.5);
+      doc.text(generatedLabel || "-", pillX + pillWidth / 2, pillY + 10, { align: "center" });
+    }
+  };
+
+  const drawSectionTitle = (label, y) => {
+    doc.setFillColor(37, 99, 235);
+    doc.rect(margin, y + 0.5, 2.5, 5, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text(label, margin + 6, y + 4.5);
+  };
+
+  const nextPage = () => {
+    drawFooter();
+    doc.addPage();
+    currentPage += 1;
+    drawHeaderBanner(true);
+    return 28;
+  };
+
+  drawHeaderBanner(false);
+  let curY = 38;
+  const cardH = drawCompanyCard(doc, {
+    company,
+    startY: curY,
+    margin,
+    contentWidth,
+    pageWidth,
+    extraLabel: "PERIOD",
+    extraVal: `${fromLabel || "-"} - ${toLabel || "-"}`,
+  });
+  curY += cardH + 4;
+
+  const metaW = (contentWidth - 6) / 3;
+  const metaH = 14;
+  [
+    { label: "FROM DATE", value: fromLabel || "-" },
+    { label: "TO DATE", value: toLabel || "-" },
+    { label: "REPORT GENERATION DATE", value: generatedLabel || "-" },
+  ].forEach((item, idx) => {
+    const x = margin + idx * (metaW + 3);
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(x, curY, metaW, metaH, 1.8, 1.8, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(6.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text(item.label, x + 3, curY + 5);
+    doc.setFontSize(9);
+    doc.setTextColor(15, 23, 42);
+    doc.text(item.value, x + 3, curY + 10.5);
+  });
+  curY += metaH + 6;
+
+  const drawKpis = (items, y) => {
+    const cardW = (contentWidth - 6) / 3;
+    items.forEach((kpi, idx) => {
+      const x = margin + idx * (cardW + 3);
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.35);
+      doc.roundedRect(x, y, cardW, 20, 2, 2, "FD");
+      doc.setFillColor(kpi.color[0], kpi.color[1], kpi.color[2]);
+      doc.roundedRect(x, y, cardW, 1.6, 1, 1, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(6.6);
+      doc.setTextColor(100, 116, 139);
+      doc.text(kpi.label, x + 3.5, y + 6.5);
+      doc.setFontSize(11);
+      doc.setTextColor(15, 23, 42);
+      doc.text(String(kpi.value), x + 3.5, y + 13.5);
+    });
+  };
+
+  const qtyLabel = Number(summary.totalQuantity || 0).toLocaleString("en-IN", {
+    maximumFractionDigits: 2,
+  });
+  drawKpis([
+    { label: "TOTAL REVENUE", value: formatMoney(summary.totalRevenue || 0), color: [37, 99, 235] },
+    { label: "TOTAL SALES", value: String(summary.totalSales || 0), color: [5, 150, 105] },
+    { label: "TOTAL INVOICES", value: String(summary.totalInvoices || 0), color: [99, 102, 241] },
+  ], curY);
+  curY += 23;
+  drawKpis([
+    { label: "AVERAGE INVOICE VALUE", value: formatMoney(summary.averageInvoiceValue || 0), color: [217, 119, 6] },
+    { label: "TOTAL GST COLLECTED", value: formatMoney(summary.totalGst || 0), color: [13, 148, 136] },
+    { label: "TOTAL QUANTITY SOLD", value: qtyLabel, color: [15, 23, 42] },
+  ], curY);
+  curY += 28;
+
+  const paintHeader = (columns, y) => {
+    doc.setFillColor(30, 41, 59);
+    doc.rect(margin, y, contentWidth, 7.5, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.2);
+    doc.setTextColor(255, 255, 255);
+    columns.forEach((column) => {
+      doc.text(column.label, column.x, y + 5, column.align ? { align: column.align } : undefined);
+    });
+    return y + 7.5;
+  };
+
+  const clip = (value, max) => {
+    const text = String(value || "");
+    return text.length > max ? `${text.substring(0, max - 1)}...` : text;
+  };
+
+  const productColumns = [
+    { label: "#", x: margin + 3 },
+    { label: "PRODUCT NAME", x: margin + 12 },
+    { label: "QTY SOLD", x: margin + 108, align: "right" },
+    { label: "SALES AMOUNT", x: margin + 148, align: "right" },
+    { label: "GST AMOUNT", x: pageWidth - margin - 3, align: "right" },
+  ];
+
+  if (curY > pageHeight - 48) curY = nextPage();
+  drawSectionTitle(`PRODUCT SALES SUMMARY (${products.length})`, curY);
+  curY += 7;
+  curY = paintHeader(productColumns, curY);
+
+  if (products.length === 0) {
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184);
+    doc.text("No product lines were recorded on these invoices.", margin + 3, curY + 6);
+    curY += 10;
+  } else {
+    products.forEach((product, idx) => {
+      if (curY > pageHeight - 22) {
+        curY = nextPage();
+        curY = paintHeader(productColumns, curY);
+      }
+      const rowH = 7.2;
+      const even = idx % 2 === 0;
+      doc.setFillColor(even ? 255 : 248, even ? 255 : 250, even ? 255 : 252);
+      doc.rect(margin, curY, contentWidth, rowH, "F");
+      doc.setDrawColor(241, 245, 249);
+      doc.line(margin, curY + rowH, margin + contentWidth, curY + rowH);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(100, 116, 139);
+      doc.text(String(idx + 1), productColumns[0].x, curY + 4.8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(15, 23, 42);
+      doc.text(clip(product.productName, 42), productColumns[1].x, curY + 4.8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(51, 65, 85);
+      doc.text(String(product.quantitySold ?? 0), productColumns[2].x, curY + 4.8, { align: "right" });
+      doc.text(formatMoney(product.revenueGenerated || 0), productColumns[3].x, curY + 4.8, { align: "right" });
+      doc.text(formatMoney(product.gstAmount || 0), productColumns[4].x, curY + 4.8, { align: "right" });
+      curY += rowH;
+    });
+  }
+
+  curY += 8;
+  const invoiceColumns = [
+    { label: "INVOICE #", x: margin + 2 },
+    { label: "CUSTOMER", x: margin + 36 },
+    { label: "DATE", x: margin + 82 },
+    { label: "ITEMS", x: margin + 112, align: "right" },
+    { label: "TOTAL", x: margin + 148, align: "right" },
+    { label: "STATUS", x: pageWidth - margin - 3, align: "right" },
+  ];
+
+  if (curY > pageHeight - 48) curY = nextPage();
+  drawSectionTitle(`INVOICE DETAILS (${invoices.length})`, curY);
+  curY += 7;
+  curY = paintHeader(invoiceColumns, curY);
+
+  invoices.forEach((invoice, idx) => {
+    if (curY > pageHeight - 22) {
+      curY = nextPage();
+      curY = paintHeader(invoiceColumns, curY);
+    }
+    const rowH = 7.2;
+    const even = idx % 2 === 0;
+    doc.setFillColor(even ? 255 : 248, even ? 255 : 250, even ? 255 : 252);
+    doc.rect(margin, curY, contentWidth, rowH, "F");
+    doc.setDrawColor(241, 245, 249);
+    doc.line(margin, curY + rowH, margin + contentWidth, curY + rowH);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(37, 99, 235);
+    doc.text(clip(invoice.invoiceNumber, 18), invoiceColumns[0].x, curY + 4.8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(7.4);
+    doc.text(clip(invoice.customerName, 22), invoiceColumns[1].x, curY + 4.8);
+    doc.setTextColor(100, 116, 139);
+    doc.text(formatDate(invoice.invoiceDate), invoiceColumns[2].x, curY + 4.8);
+    doc.setTextColor(51, 65, 85);
+    doc.text(String(invoice.itemsCount ?? 0), invoiceColumns[3].x, curY + 4.8, { align: "right" });
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(15, 23, 42);
+    doc.text(formatMoney(invoice.totalAmount || 0), invoiceColumns[4].x, curY + 4.8, { align: "right" });
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(71, 85, 105);
+    doc.text(clip(invoice.paymentStatus || "-", 14), invoiceColumns[5].x, curY + 4.8, { align: "right" });
+    curY += rowH;
+  });
+
+  curY += 8;
+  if (curY > pageHeight - 42) curY = nextPage();
+  drawSectionTitle("FINAL SUMMARY", curY);
+  curY += 8;
+
+  const finalW = (contentWidth - 6) / 3;
+  [
+    { label: "TOTAL REVENUE", value: formatMoney(summary.totalRevenue || 0) },
+    { label: "TOTAL GST", value: formatMoney(summary.totalGst || 0) },
+    { label: "GRAND TOTAL", value: formatMoney(summary.grandTotal || summary.totalRevenue || 0) },
+  ].forEach((item, idx) => {
+    const x = margin + idx * (finalW + 3);
+    doc.setFillColor(15, 23, 42);
+    doc.roundedRect(x, curY, finalW, 18, 2, 2, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(6.6);
+    doc.setTextColor(148, 163, 184);
+    doc.text(item.label, x + 3.5, curY + 6);
+    doc.setFontSize(11);
+    doc.setTextColor(255, 255, 255);
+    doc.text(item.value, x + 3.5, curY + 13);
+  });
+  curY += 22;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.2);
+  doc.setTextColor(100, 116, 139);
+  const note = "Grand total is the sum of invoice totals. GST is already included in those totals.";
+  const noteLines = doc.splitTextToSize(note, contentWidth);
+  if (curY + noteLines.length * 4 > pageHeight - 18) curY = nextPage();
+  doc.text(noteLines, margin, curY);
+
+  if (salesRecordsBlocked) {
+    curY += noteLines.length * 4 + 2;
+    const blocked = "Sales records could not be read. This report uses active invoices only, so completely deleted invoices may be missing.";
+    const blockedLines = doc.splitTextToSize(blocked, contentWidth);
+    if (curY + blockedLines.length * 4 > pageHeight - 18) curY = nextPage();
+    doc.text(blockedLines, margin, curY);
   }
 
   drawFooter();

@@ -506,7 +506,7 @@ const Profile = () => {
             </div>
 
             <div className="profile-field">
-              <label>Alternate / Billing Email</label>
+              <label>Business Email</label>
               <div className="field-input-box">
                 <Mail size={16} className="field-icon" />
                 <input
@@ -520,8 +520,10 @@ const Profile = () => {
                   className={fieldErrors.alternateEmail ? "has-error" : ""}
                 />
               </div>
-              {fieldErrors.alternateEmail && (
+              {fieldErrors.alternateEmail ? (
                 <span className="field-error-text">{fieldErrors.alternateEmail}</span>
+              ) : (
+                <span className="field-hint-text">Printed on invoices. Your login email is not used unless you save it here.</span>
               )}
             </div>
 

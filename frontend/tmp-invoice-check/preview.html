@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>invoice render</title>
+  <style>
+    body { margin: 0; background: #444; }
+    canvas { display: block; background: white; }
+  </style>
+</head>
+<body>
+  <canvas id="page"></canvas>
+  <script type="module">
+    import * as pdfjs from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.8.69/build/pdf.min.mjs";
+    pdfjs.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.8.69/build/pdf.worker.min.mjs";
+    const params = new URLSearchParams(location.search);
+    const pdf = await pdfjs.getDocument(params.get("file") || "full.pdf").promise;
+    const page = await pdf.getPage(Number(params.get("page") || 1));
+    const viewport = page.getViewport({ scale: 1.4 });
+    const canvas = document.getElementById("page");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+    document.title = `rendered ${pdf.numPages}`;
+  </script>
+</body>
+</html>

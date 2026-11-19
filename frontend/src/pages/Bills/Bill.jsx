@@ -29,6 +29,7 @@ import { completelyDeleteInvoice, createBill, deleteInvoiceAsWrongEntry, getBill
 import { getProfile } from '../../services/profileService';
 import { getVariantLabel, formatPackLabel } from '../../utils/productVariant';
 import { shareOrDownloadFile } from '../../utils/pdfShare';
+import { applySellerToInvoice, sellerFromCompany } from '../../utils/companySeller';
 import { SERVER_ORIGIN } from '../../services/api';
 import './Bills.css';
 
@@ -47,6 +48,7 @@ const resolveLogoSrc = (path) => {
 const isBusinessLogo = (url) => {
   if (!url || typeof url !== 'string') return false;
   if (url.includes('dicebear.com')) return false;
+  if (url.startsWith('data:image/')) return true;
   return /\/uploads\/profile\/|\.(png|jpe?g|webp|gif)(\?|$)/i.test(url);
 };
 
@@ -145,10 +147,8 @@ const Bill = () => {
   const [productsLoading, setProductsLoading] = useState(false);
 
   const [sellerGST, setSellerGST] = useState("");
-  const [businessLogo, setBusinessLogo] = useState(() => {
-    const avatar = user?.avatar || "";
-    return isBusinessLogo(avatar) ? resolveLogoSrc(avatar) : "";
-  });
+  const [companySeller, setCompanySeller] = useState(null);
+  const [businessLogo, setBusinessLogo] = useState("");
 
   // UI state
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -230,12 +230,32 @@ const Bill = () => {
     getProfile()
       .then((data) => {
         if (cancelled) return;
-        const imagePath = data.profile?.profile_image || "";
+        const seller = sellerFromCompany(
+          {
+            companyName: data.profile?.company_name,
+            alternateEmail: data.profile?.alternate_email,
+            mobile: data.profile?.mobile,
+            gstNumber: data.profile?.gst_number,
+            address: data.profile?.address,
+            city: data.profile?.city,
+            state: data.profile?.state,
+            country: data.profile?.country,
+            pincode: data.profile?.pincode,
+            profileImage: data.profile?.profile_image,
+            businessConfigured: data.profile?.business_configured === true,
+          },
+          {
+            personalName: data.user?.name || '',
+            authEmail: data.user?.email || '',
+          }
+        );
+        setCompanySeller(seller);
+        const imagePath = seller.logo || "";
         const src = resolveLogoSrc(imagePath);
         if (isBusinessLogo(src) || isBusinessLogo(imagePath)) {
           setBusinessLogo(src);
         }
-        if (data.profile?.gst_number) setSellerGST(data.profile.gst_number);
+        setSellerGST(seller.gstin || '');
       })
       .catch(() => {});
     return () => {
@@ -356,11 +376,23 @@ const Bill = () => {
     `
   });
 
+  const invoiceForDocument = (invoice) => applySellerToInvoice(
+    { ...invoice, profileImage: invoice?.profileImage || businessLogo },
+    companySeller || {
+      companyName: '',
+      email: '',
+      phone: '',
+      gstin: '',
+      address: '',
+      logo: businessLogo || '',
+    }
+  );
+
   const handleDownloadPDF = async (inv) => {
     const targetInvoice = inv || selectedInvoice;
     if (!targetInvoice) return;
     try {
-      generateInvoicePDF({ ...targetInvoice, profileImage: targetInvoice.profileImage || businessLogo });
+      generateInvoicePDF(invoiceForDocument(targetInvoice));
       showToast("Invoice PDF downloaded successfully!");
     } catch (err) {
       console.error("PDF download failed:", err);
@@ -373,7 +405,7 @@ const Bill = () => {
     if (!targetInvoice) return;
     try {
       const file = generateInvoicePDF(
-        { ...targetInvoice, profileImage: targetInvoice.profileImage || businessLogo },
+        invoiceForDocument(targetInvoice),
         { delivery: 'file' }
       );
       const result = await shareOrDownloadFile(file, `Tax Invoice ${targetInvoice.invoice_number || ''}`);
@@ -502,13 +534,6 @@ const Bill = () => {
       item?.weight ?? item?.package_weight ?? item?.packageWeight,
       item?.unit || item?.weight_unit || item?.weightUnit
     );
-  };
-
-  const lineGstAmount = (item) => {
-    const unitPrice = Number(item.selling_price || item.sellingPrice || item.price || 0);
-    const qty = Number(item.quantity || 1);
-    const gstPct = Number(item.gst || 0);
-    return (unitPrice * qty * gstPct) / 100;
   };
 
   const pageNumbers = useMemo(() => {
@@ -1046,79 +1071,52 @@ const Bill = () => {
             <div className="receipt-printable-area" ref={printRef}>
               <div className="inv-sheet">
                 <header className="inv-header">
-                  <div className="inv-brand">
-                    <div className="inv-logo">
-                      {businessLogo ? (
-                        <img src={businessLogo} alt="" crossOrigin="anonymous" />
-                      ) : (
-                        "BS"
-                      )}
-                    </div>
-                    <div className="inv-brand-copy">
-                      <h1>Billing SaaS</h1>
-                      <p>{selectedInvoice.seller_name || selectedInvoice.sellerName || user?.name || 'Business Owner'}</p>
-                      <p>{selectedInvoice.seller_email || selectedInvoice.sellerEmail || user?.email || ''}</p>
-                      {(selectedInvoice.seller_gst || selectedInvoice.sellerGST) && (
-                        <p>GSTIN: {selectedInvoice.seller_gst || selectedInvoice.sellerGST}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="inv-doc-meta">
-                    <h2>INVOICE</h2>
-                    <table className="inv-meta-table">
-                      <tbody>
-                        <tr>
-                          <td>Invoice No.</td>
-                          <td>{selectedInvoice.invoice_number || selectedInvoice.bill_number || '—'}</td>
-                        </tr>
-                        <tr>
-                          <td>Date</td>
-                          <td>{fmtDate(selectedInvoice.created_at || selectedInvoice.date)}</td>
-                        </tr>
-                        <tr>
-                          <td>Status</td>
-                          <td>
-                            <span className={`inv-status ${getBillStatus(selectedInvoice).toLowerCase()}`}>
-                              {String(getBillStatus(selectedInvoice)).toUpperCase()}
-                            </span>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
+                  <h1>{companySeller?.companyName || ''}</h1>
+                  <h2>TAX INVOICE</h2>
                 </header>
+                <div className="inv-meta-line">
+                  <span>Invoice No: {selectedInvoice.invoice_number || selectedInvoice.bill_number || ''}</span>
+                  <span>Date: {fmtDate(selectedInvoice.created_at || selectedInvoice.date)}</span>
+                </div>
 
                 <section className="inv-party-row">
                   <div className="inv-billto">
-                    <h3>Bill To</h3>
-                    <p className="inv-party-name">
-                      {selectedInvoice.customer_name || selectedInvoice.customerName || 'N/A'}
-                    </p>
-                    <p>{selectedInvoice.customer_email || selectedInvoice.customerEmail || '—'}</p>
-                    <p>{selectedInvoice.customer_phone || selectedInvoice.customerPhone || selectedInvoice.mobile || '—'}</p>
-                    <p>{selectedInvoice.customer_address || selectedInvoice.customerAddress || '—'}</p>
-                    {(selectedInvoice.customer_gst || selectedInvoice.customerGST) && (
-                      <p>GSTIN: {selectedInvoice.customer_gst || selectedInvoice.customerGST}</p>
-                    )}
+                    <h3>Seller Details</h3>
+                    {companySeller?.companyName ? <p className="inv-party-name">{companySeller.companyName}</p> : null}
+                    {companySeller?.phone ? <p>{companySeller.phone}</p> : null}
+                    {companySeller?.address ? <p>{companySeller.address}</p> : null}
+                    {companySeller?.email ? <p>{companySeller.email}</p> : null}
+                    {companySeller?.gstin ? <p>GSTIN: {companySeller.gstin}</p> : null}
                   </div>
-                  <div className="inv-billto inv-payinfo">
-                    <h3>Payment</h3>
-                    <p>Status: {String(getBillStatus(selectedInvoice)).toUpperCase()}</p>
-                    <p>Generated: {fmtDate(selectedInvoice.created_at || selectedInvoice.date)}</p>
+                  <div className="inv-billto">
+                    <h3>Billed To</h3>
+                    <p className="inv-party-name">
+                      {selectedInvoice.customer_name || selectedInvoice.customerName || 'Walk-in Customer'}
+                    </p>
+                    {(selectedInvoice.customer_email || selectedInvoice.customerEmail) ? (
+                      <p>{selectedInvoice.customer_email || selectedInvoice.customerEmail}</p>
+                    ) : null}
+                    {(selectedInvoice.customer_phone || selectedInvoice.customerPhone || selectedInvoice.mobile) ? (
+                      <p>Phone: {selectedInvoice.customer_phone || selectedInvoice.customerPhone || selectedInvoice.mobile}</p>
+                    ) : null}
+                    {(selectedInvoice.customer_address || selectedInvoice.customerAddress) ? (
+                      <p>{selectedInvoice.customer_address || selectedInvoice.customerAddress}</p>
+                    ) : null}
+                    {(selectedInvoice.customer_gst || selectedInvoice.customerGST) ? (
+                      <p>GSTIN: {selectedInvoice.customer_gst || selectedInvoice.customerGST}</p>
+                    ) : null}
                   </div>
                 </section>
 
                 <table className="inv-items-table">
                   <thead>
                     <tr>
-                      <th className="col-sno">S.No</th>
-                      <th className="col-name">Product Name</th>
-                      <th className="col-pack">Pack Size</th>
+                      <th className="col-sno">#</th>
+                      <th className="col-name">Item &amp; Variant</th>
                       <th className="text-center">Qty</th>
-                      <th className="text-right">Unit Price</th>
-                      <th className="text-center">GST %</th>
-                      <th className="text-right">GST Amount</th>
-                      <th className="text-right">Line Total</th>
+                      <th className="text-right">Price</th>
+                      <th className="text-center">GST</th>
+                      <th className="text-right">Total</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1128,23 +1126,26 @@ const Bill = () => {
                         const qty = item.quantity || 1;
                         const gstPct = item.gst || 0;
                         const itemTotal = item.total || (unitPrice * qty);
+                        const itemName = item.name || item.product_name || item.productName || 'Item';
+                        const pack = formatPackSize(item);
+                        const variant = pack && pack !== '—' && !String(itemName).includes(pack)
+                          ? `${itemName} ${pack}`
+                          : itemName;
 
                         return (
                           <tr key={idx}>
                             <td className="col-sno">{idx + 1}</td>
-                            <td className="col-name">{item.name || item.product_name || item.productName || 'Item'}</td>
-                            <td className="col-pack">{formatPackSize(item)}</td>
+                            <td className="col-name">{variant}</td>
                             <td className="text-center">{qty}</td>
                             <td className="text-right">{fmt(unitPrice)}</td>
                             <td className="text-center">{Number(gstPct)}%</td>
-                            <td className="text-right">{fmt(lineGstAmount(item))}</td>
                             <td className="text-right col-line-total">{fmt(itemTotal)}</td>
                           </tr>
                         );
                       })
                     ) : (
                       <tr>
-                        <td colSpan="8" className="inv-empty-row">No line items</td>
+                        <td colSpan="6" className="inv-empty-row">No line items</td>
                       </tr>
                     )}
                   </tbody>
@@ -1162,10 +1163,12 @@ const Bill = () => {
                         <td>GST Total</td>
                         <td>{fmt(selectedInvoice.gst || selectedInvoice.gst_amount)}</td>
                       </tr>
-                      <tr>
-                        <td>Discount</td>
-                        <td>{fmt(selectedInvoice.discount || 0)}</td>
-                      </tr>
+                      {Number(selectedInvoice.discount || 0) > 0 ? (
+                        <tr>
+                          <td>Discount</td>
+                          <td>{fmt(selectedInvoice.discount || 0)}</td>
+                        </tr>
+                      ) : null}
                       <tr className="inv-grand">
                         <td>Grand Total</td>
                         <td>{fmt(selectedInvoice.grand_total || selectedInvoice.total_amount || selectedInvoice.total || totals.total)}</td>

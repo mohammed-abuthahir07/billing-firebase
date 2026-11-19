@@ -22,10 +22,12 @@ import {
   downloadMonthlyReportPdf,
   downloadYearlyReportPdf,
   downloadTotalReportPdf,
+  downloadCustomRangeReportPdf,
   getMonthlyInvoices,
   getMonthlySummary,
   getAvailableReportYears,
 } from '../../services/reportService';
+import { validateDateRange } from '../../utils/reportDateRange';
 import { shareOrDownloadFile } from '../../utils/pdfShare';
 import './Reports.css';
 
@@ -104,8 +106,14 @@ const Reports = () => {
   const [downloadingMonthly, setDownloadingMonthly] = useState(false);
   const [downloadingYearly, setDownloadingYearly] = useState(false);
   const [downloadingTotal, setDownloadingTotal] = useState(false);
+  const [rangeMode, setRangeMode] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [rangeError, setRangeError] = useState('');
 
-  const isDownloadingAny = downloadingMonthly || downloadingYearly || downloadingTotal;
+  const downloadingRange = rangeMode !== '';
+  const isDownloadingAny = downloadingMonthly || downloadingYearly || downloadingTotal || downloadingRange;
+  const pdfLockRef = useRef(false);
 
   // Toast alert
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -222,7 +230,8 @@ const Reports = () => {
   };
 
   const shareReport = async (kind) => {
-    if (isDownloadingAny) return;
+    if (pdfLockRef.current || isDownloadingAny) return;
+    pdfLockRef.current = true;
     const setBusy = kind === 'monthly' ? setDownloadingMonthly : kind === 'yearly' ? setDownloadingYearly : setDownloadingTotal;
     setBusy(true);
     try {
@@ -237,13 +246,15 @@ const Reports = () => {
     } catch (err) {
       if (err?.name !== 'AbortError') showToast(err.message || 'Could not share the report.', 'error');
     } finally {
+      pdfLockRef.current = false;
       setBusy(false);
     }
   };
 
   // 1. Download Monthly Report PDF
   const handleDownloadMonthlyPdf = async () => {
-    if (isDownloadingAny) return;
+    if (pdfLockRef.current || isDownloadingAny) return;
+    pdfLockRef.current = true;
     setDownloadingMonthly(true);
     try {
       await downloadMonthlyReportPdf({
@@ -254,13 +265,15 @@ const Reports = () => {
     } catch (err) {
       showToast(err.message || 'Failed to download Monthly Report PDF.', 'error');
     } finally {
+      pdfLockRef.current = false;
       setDownloadingMonthly(false);
     }
   };
 
   // 2. Download Yearly Report PDF
   const handleDownloadYearlyPdf = async () => {
-    if (isDownloadingAny) return;
+    if (pdfLockRef.current || isDownloadingAny) return;
+    pdfLockRef.current = true;
     setDownloadingYearly(true);
     try {
       await downloadYearlyReportPdf(selectedYear);
@@ -268,13 +281,15 @@ const Reports = () => {
     } catch (err) {
       showToast(err.message || 'Failed to download Yearly Report PDF.', 'error');
     } finally {
+      pdfLockRef.current = false;
       setDownloadingYearly(false);
     }
   };
 
   // 3. Download Total Report PDF
   const handleDownloadTotalPdf = async () => {
-    if (isDownloadingAny) return;
+    if (pdfLockRef.current || isDownloadingAny) return;
+    pdfLockRef.current = true;
     setDownloadingTotal(true);
     try {
       await downloadTotalReportPdf();
@@ -282,7 +297,42 @@ const Reports = () => {
     } catch (err) {
       showToast(err.message || 'Failed to download Complete Business Report PDF.', 'error');
     } finally {
+      pdfLockRef.current = false;
       setDownloadingTotal(false);
+    }
+  };
+
+  const handleCustomRange = async (delivery) => {
+    if (pdfLockRef.current || isDownloadingAny) return;
+    const message = validateDateRange(fromDate, toDate);
+    if (message) {
+      setRangeError(message);
+      showToast(message, 'error');
+      return;
+    }
+
+    pdfLockRef.current = true;
+    setRangeError('');
+    setRangeMode(delivery === 'file' ? 'file' : 'save');
+    try {
+      if (delivery === 'file') {
+        const file = await downloadCustomRangeReportPdf({ fromDate, toDate, delivery: 'file' });
+        if (!(file instanceof File)) throw new Error('Could not prepare the PDF.');
+        const result = await shareOrDownloadFile(file, 'Custom date range report');
+        showToast(result === 'shared' ? 'Custom date range report shared.' : 'This browser cannot share files, so the PDF was downloaded.');
+      } else {
+        await downloadCustomRangeReportPdf({ fromDate, toDate });
+        showToast('Custom date range report downloaded.');
+      }
+    } catch (err) {
+      if (err?.name !== 'AbortError') {
+        const text = err?.message || 'Could not generate the custom date range report.';
+        setRangeError(text);
+        showToast(text, 'error');
+      }
+    } finally {
+      pdfLockRef.current = false;
+      setRangeMode('');
     }
   };
 
@@ -377,7 +427,7 @@ const Reports = () => {
           </p>
           <h1>Financial Reports</h1>
           <p>
-            Generate and export official business reports for {user?.name || 'your business'} — Monthly, Yearly, and Lifetime.
+            Generate and export official business reports for {user?.name || 'your business'} — Monthly, Yearly, Lifetime, and a custom date range.
           </p>
         </div>
 
@@ -479,6 +529,71 @@ const Reports = () => {
           </button>
         </div>
       </header>
+
+      <section className="custom-range-card" aria-label="Custom date range report">
+        <div className="custom-range-copy">
+          <h2>Custom Date Range Report</h2>
+          <p>
+            Choose a start and end date. Invoices on both dates are included, using each invoice date rather than the download date.
+          </p>
+        </div>
+        <div className="custom-range-controls">
+          <label className="custom-range-field">
+            <span>From Date</span>
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => {
+                setFromDate(e.target.value);
+                setRangeError('');
+              }}
+              disabled={isDownloadingAny}
+              aria-label="From Date"
+              required
+            />
+          </label>
+          <label className="custom-range-field">
+            <span>To Date</span>
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => {
+                setToDate(e.target.value);
+                setRangeError('');
+              }}
+              disabled={isDownloadingAny}
+              aria-label="To Date"
+              required
+            />
+          </label>
+          <button
+            className="download-report-btn monthly-btn"
+            type="button"
+            onClick={() => handleCustomRange('save')}
+            disabled={isDownloadingAny}
+            aria-busy={rangeMode === 'save'}
+          >
+            {rangeMode === 'save' ? <Loader2 size={16} className="spin-icon" /> : <Download size={16} />}
+            <span>{rangeMode === 'save' ? 'Generating…' : 'Generate Report'}</span>
+          </button>
+          <button
+            className="download-report-btn monthly-btn"
+            type="button"
+            onClick={() => handleCustomRange('file')}
+            disabled={isDownloadingAny}
+            aria-busy={rangeMode === 'file'}
+          >
+            {rangeMode === 'file' ? <Loader2 size={16} className="spin-icon" /> : <FileText size={16} />}
+            <span>{rangeMode === 'file' ? 'Preparing…' : 'Share Custom Range PDF'}</span>
+          </button>
+        </div>
+        {rangeError && (
+          <p className="custom-range-error" role="alert">
+            <AlertCircle size={15} />
+            <span>{rangeError}</span>
+          </p>
+        )}
+      </section>
 
       {/* Loading state */}
       {loading && (

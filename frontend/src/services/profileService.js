@@ -1,6 +1,7 @@
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { updateProfile as updateFirebaseProfile } from "firebase/auth";
 import { db, auth } from "../firebase/firebase";
+import { isBusinessProfileComplete } from "../utils/profileCompletion";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -73,6 +74,7 @@ export const getProfile = async () => {
       country:         profileData?.country        || "",
       pincode:         profileData?.pincode        || "",
       website:         profileData?.website        || "",
+      business_configured: profileData?.businessConfigured === true,
       // profileImage can be a base64 data-URL or a Firebase Storage URL
       profile_image:   profileData?.profileImage   || null,
       created_at:      profileData?.createdAt      || new Date().toISOString(),
@@ -106,6 +108,11 @@ export const updateProfile = async (userData) => {
     country:        userData.country         || "",
     pincode:        userData.pincode         || "",
     website:        userData.website         || "",
+    businessConfigured: isBusinessProfileComplete({
+      companyName: userData.company_name || userData.companyName || "",
+      mobile: userData.mobile || "",
+      address: userData.address || "",
+    }),
     // Keep existing profileImage if caller doesn't pass one
     ...(userData.profile_image !== undefined && {
       profileImage: userData.profile_image,
@@ -140,6 +147,7 @@ export const updateProfile = async (userData) => {
       country:         companyData.country,
       pincode:         companyData.pincode,
       website:         companyData.website,
+      business_configured: companyData.businessConfigured === true,
       profile_image:   companyData.profileImage ?? null,
     },
   };
@@ -174,3 +182,21 @@ export const uploadProfileImage = async (file) => {
     profile_image: base64,
   };
 };
+
+/**
+ * Live view of the signed-in user's company profile.
+ * The listener is scoped to that user's existing profile document.
+ */
+export function subscribeCompanyProfile(userId, onProfile, onError) {
+  if (!userId) return () => {};
+  return onSnapshot(
+    doc(db, `users/${userId}/profile/company`),
+    (snapshot) => {
+      if (!snapshot.exists() && snapshot.metadata.fromCache) return;
+      onProfile(snapshot.exists() ? snapshot.data() : null);
+    },
+    (error) => {
+      if (onError) onError(error);
+    }
+  );
+}

@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebase';
 import { formatVariantLabel } from '../utils/productVariant';
+import { sellerFromCompany } from '../utils/companySeller';
 import { floorMoney, isPermissionDenied, money, permissionMessage, roundCurrency } from '../utils/salesMerge';
 import { notifyOutOfStock } from './stockAlertService';
 import { clearMonthlyInvoiceCache } from './reportService';
@@ -107,6 +108,8 @@ function buildInvoicePayload({
   sellerName,
   sellerEmail,
   sellerGST,
+  sellerPhone,
+  sellerAddress,
   billData,
   invoiceSubtotal,
   invoiceGstAmount,
@@ -128,6 +131,8 @@ function buildInvoicePayload({
     seller_name: sellerName,
     seller_email: sellerEmail,
     seller_gst: sellerGST,
+    seller_phone: sellerPhone,
+    seller_address: sellerAddress,
     customer_name: customerName,
     customerName,
     customer_phone: customerPhone,
@@ -165,9 +170,15 @@ export const createBill = async (billData) => {
       const profileSnap = await transaction.get(profileRef);
       const profileData = profileSnap.exists() ? profileSnap.data() : {};
 
-      const sellerName = profileData.companyName || user.displayName || 'Seller';
-      const sellerEmail = profileData.alternateEmail || '';
-      const sellerGST = profileData.gstNumber || '';
+      const seller = sellerFromCompany(profileData, {
+        personalName: user.displayName || '',
+        authEmail: user.email || '',
+      });
+      const sellerName = seller.companyName;
+      const sellerEmail = seller.email;
+      const sellerGST = seller.gstin;
+      const sellerPhone = seller.phone;
+      const sellerAddress = seller.address;
 
       const quantityMap = new Map();
       for (const item of billData.products) {
@@ -273,6 +284,8 @@ export const createBill = async (billData) => {
         sellerName,
         sellerEmail,
         sellerGST,
+        sellerPhone,
+        sellerAddress,
         billData,
         invoiceSubtotal,
         invoiceGstAmount,

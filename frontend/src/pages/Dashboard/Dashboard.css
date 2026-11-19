@@ -13,6 +13,72 @@
   animation: pageEnter 0.45s var(--ease-out) both;
 }
 
+.profile-reminder {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--primary) 9%, var(--bg-secondary));
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border-color));
+  box-shadow: 0 10px 24px -18px rgba(37, 99, 235, 0.9);
+}
+
+.profile-reminder-icon {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: #fff;
+}
+
+.profile-reminder-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.profile-reminder-copy h2 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.profile-reminder-copy p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.profile-reminder-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition-fast);
+}
+
+.profile-reminder-btn:hover {
+  background: var(--primary-hover, #1d4ed8);
+  box-shadow: 0 8px 18px -10px rgba(37, 99, 235, 0.9);
+}
+
 .dashboard-header {
   display: flex;
   justify-content: space-between;
@@ -509,6 +575,16 @@
 }
 
 @media (max-width: 768px) {
+  .profile-reminder {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .profile-reminder-btn {
+    width: 100%;
+  }
+
   .dashboard-header {
     flex-direction: column;
     align-items: stretch;

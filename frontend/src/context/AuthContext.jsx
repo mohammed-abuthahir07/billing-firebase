@@ -59,9 +59,8 @@ export const AuthProvider = ({ children }) => {
             try {
               await setDoc(doc(db, 'users', firebaseUser.uid), newUserPayload, { merge: true });
               await setDoc(doc(db, `users/${firebaseUser.uid}/profile/company`), {
-                companyName: newUserPayload.name,
-                alternateEmail: firebaseUser.email,
                 country: 'India',
+                businessConfigured: false,
                 updatedAt: serverTimestamp(),
               }, { merge: true });
               await setDoc(doc(db, `users/${firebaseUser.uid}/stats/dashboard`), {
@@ -240,9 +239,8 @@ export const AuthProvider = ({ children }) => {
         try {
           await setDoc(doc(db, 'users', firebaseUser.uid), userPayload, { merge: true });
           await setDoc(doc(db, `users/${firebaseUser.uid}/profile/company`), {
-            companyName: trimmedName,
-            alternateEmail: trimmedEmail,
             country: 'India',
+            businessConfigured: false,
             updatedAt: serverTimestamp()
           }, { merge: true });
           await setDoc(doc(db, `users/${firebaseUser.uid}/stats/dashboard`), {
